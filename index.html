@@ -170,8 +170,18 @@ nav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stro
     <div class="card" id="phaseCard"></div>
     <h2 class="disp" style="font-size:20px;margin:20px 0 10px">Les 40 semaines</h2>
     <div id="weekList"></div>
+
+    <h2 class="disp" style="font-size:18px;margin:22px 0 10px">Sauvegarde</h2>
+    <div class="card">
+      <p class="small">Ta progression est enregistrée dans ce navigateur. Exporte un fichier de sauvegarde de temps en temps (ou avant de changer de téléphone), et réimporte-le pour tout récupérer.</p>
+      <div class="mt" style="display:flex;gap:10px">
+        <button class="btn btn-ghost" id="exportBtn">⬇ Exporter</button>
+        <button class="btn btn-ghost" id="importBtn">⬆ Importer</button>
+      </div>
+      <input type="file" id="importFile" accept="application/json" style="display:none">
+    </div>
+
     <p class="center mt"><button class="link-danger" id="resetBtn">Réinitialiser toute ma progression</button></p>
-    <p class="small center mt">Ta progression est enregistrée dans le navigateur de ce téléphone (localStorage). Si tu vides les données du navigateur, elle sera perdue.</p>
   </section>
 
   <!-- ================= VUE SÉANCE ================= -->
@@ -237,6 +247,7 @@ const PHASES = [
   crit:"Pseudo-planche lean 3×20 s · Frog stand 30 s · Handstand mur 60 s · Gainage latéral 60 s/côté · 4×8 tractions",
   seances:[
   { key:"A", title:"Poussée + bases Planche", place:"Maison (parallettes) ou salle",
+    mat:"Parallettes (poignées 35 cm), élastique, sac à dos (lest optionnel), haltères légers",
     act:"Activation : 2 séries légères de pompes + 2 × 10 s de planche lean facile",
     vids:["planche1","warmup"],
     exos:[
@@ -247,6 +258,7 @@ const PHASES = [
       {n:"Dips sur parallettes ou entre deux supports", t:"3 × 8-12 · repos 90 s"},
       {n:"Élévations latérales élastique ou haltères", t:"3 × 15 · repos 60 s"}]},
   { key:"B", title:"Tirage + bases Drapeau", place:"Maison (barre) ou salle",
+    mat:"Barre de traction, élastique de résistance",
     act:"Activation : 2 × 3 tractions faciles à l'élastique + 20 s de suspension active",
     vids:["flag2","pull1"],
     exos:[
@@ -257,6 +269,7 @@ const PHASES = [
       {n:"Rowing élastique ou poulie basse", t:"3 × 12 · repos 60 s"},
       {n:"Suspension une main (alternée) pour la poigne", t:"3 × 10-15 s / main · repos 60 s"}]},
   { key:"C", title:"Handstand + Gainage", place:"Maison, mur dégagé",
+    mat:"Mur dégagé, tapis de sol, parallettes (poignées 35 cm)",
     act:"Activation : 2 × 20 s de handstand dos au mur facile + 10 scapula push-ups",
     vids:["hs2","hs3"],
     exos:[
@@ -267,6 +280,7 @@ const PHASES = [
       {n:"Hollow body hold + superman hold", t:"3 × 30 s chaque · repos 45 s"},
       {n:"L-sit sur parallettes (genoux pliés si besoin)", t:"4 × 10-15 s · repos 60 s"}]},
   { key:"D", title:"Full body + technique", place:"Salle Basic-Fit conseillée",
+    mat:"Salle : machine à tractions assistées, haltères ou barre, poulie, banc",
     act:"Activation : 5 min vélo/rameur + 2 séries légères du premier exercice",
     vids:["circuit","pull1"],
     exos:[
@@ -282,6 +296,7 @@ const PHASES = [
   crit:"Tuck planche 3×12-15 s · Tuck flag 8-10 s/côté · HS mur 60 s + décollés 10 s · 4×10 tractions · Dragon flag 3×6",
   seances:[
   { key:"A", title:"Planche — tuck", place:"Maison (parallettes + élastique)",
+    mat:"Parallettes, élastique, gilet ou sac lesté",
     act:"Activation : 2 × 10 s de planche lean + 10 scapula push-ups",
     vids:["planche1","planche2"],
     exos:[
@@ -292,6 +307,7 @@ const PHASES = [
       {n:"Dips lestés", t:"4 × 8 · repos 2 min"},
       {n:"Zanetti press à l'élastique (bras tendus)", t:"3 × 12 · repos 60 s"}]},
   { key:"B", title:"Drapeau — tuck flag + Tractions", place:"Maison, parc ou espalier",
+    mat:"Barre de traction ou espalier/poteau, élastique",
     act:"Activation : 2 × 3 tractions faciles + 15 s de gainage latéral chaque côté",
     vids:["flag1","flag2"],
     exos:[
@@ -302,6 +318,7 @@ const PHASES = [
       {n:"Gainage latéral lesté ou surélevé", t:"3 × 45 s / côté · repos 60 s"},
       {n:"Relevés de jambes tendues vers la barre (toes to bar)", t:"4 × 8-10 · repos 90 s"}]},
   { key:"C", title:"Handstand — premiers décollés", place:"Maison, mur dégagé",
+    mat:"Mur dégagé, tapis de sol",
     act:"Activation : 2 × 20 s HS face au mur + mobilité poignets",
     vids:["hs2","hs3"],
     exos:[
@@ -312,6 +329,7 @@ const PHASES = [
       {n:"Wall handstand shrugs (haussements d'épaules à l'envers)", t:"3 × 8 · repos 90 s"},
       {n:"L-sit jambes tendues", t:"4 × 10-15 s · repos 60 s"}]},
   { key:"D", title:"Full body + lest léger", place:"Salle Basic-Fit",
+    mat:"Salle : ceinture de lest (+5 kg), haltères, poulie, câble",
     act:"Activation : 5 min cardio + 2 séries légères de tractions",
     vids:["pull1","circuit"],
     exos:[
@@ -327,6 +345,7 @@ const PHASES = [
   crit:"Advanced tuck 3×10 s · Drapeau 1 jambe pliée 5 s/côté · HS libre 5-10 s régulier · 3×12-15 tractions · +10 kg × 5",
   seances:[
   { key:"A", title:"Planche — advanced tuck", place:"Maison (parallettes + élastique)",
+    mat:"Parallettes, élastique fin",
     act:"Activation : 2 × 10 s tuck planche facile + poignets",
     vids:["planche2","planche1"],
     exos:[
@@ -337,6 +356,7 @@ const PHASES = [
       {n:"Handstand push-ups contre le mur (ou pike surélevé)", t:"4 × 5-8 · repos 2 min"},
       {n:"Curl bras tendus à l'élastique (protection des coudes)", t:"3 × 12 · repos 60 s"}]},
   { key:"B", title:"Drapeau — une jambe + Tractions", place:"Parc / espalier / salle",
+    mat:"Poteau ou espalier, ceinture de lest (+10 kg)",
     act:"Activation : 2 tuck flags faciles par côté + suspension active",
     vids:["flag1","flag3"],
     exos:[
@@ -347,6 +367,7 @@ const PHASES = [
       {n:"Side plank étoile (jambe et bras levés)", t:"3 × 20-30 s / côté · repos 60 s"},
       {n:"Essuie-glaces suspendu (windshield wipers)", t:"3 × 6-8 · repos 90 s"}]},
   { key:"C", title:"Handstand — libre !", place:"Maison ou salle, espace libre",
+    mat:"Espace dégagé, mur à proximité",
     act:"Activation : 2 × 20 s HS au mur + poignets soignés",
     vids:["hs1","hs3"],
     exos:[
@@ -357,6 +378,7 @@ const PHASES = [
       {n:"Marche latérale en handstand le long du mur", t:"3 allers-retours · repos 90 s"},
       {n:"V-ups + hollow rocks", t:"3 × 15 · repos 45 s"}]},
   { key:"D", title:"Full body + lest moyen", place:"Salle Basic-Fit",
+    mat:"Salle : ceinture de lest (+10 à +15 kg), haltères, poulie, banc",
     act:"Activation : 5 min cardio + gammes de tractions",
     vids:["pull1","circuit"],
     exos:[
@@ -372,6 +394,7 @@ const PHASES = [
   crit:"Straddle planche élastique fin 3×8 s · Straddle flag 3-5 s/côté · HS libre 15-20 s · 3×15 tractions · +15 kg × 5",
   seances:[
   { key:"A", title:"Planche — straddle", place:"Maison (élastiques fins)",
+    mat:"Parallettes, élastiques fins (résistance dégressive)",
     act:"Activation : 2 × 8 s advanced tuck facile + poignets",
     vids:["planche2","planche1"],
     exos:[
@@ -382,6 +405,7 @@ const PHASES = [
       {n:"Maltese lean léger (épaules très avancées)", t:"3 × 8 s · repos 2 min"},
       {n:"Handstand push-ups amplitude complète (parallettes au mur)", t:"4 × 5-6 · repos 2 min"}]},
   { key:"B", title:"Drapeau — straddle flag + Tractions", place:"Parc / espalier",
+    mat:"Poteau ou espalier, ceinture de lest, ab wheel (optionnel)",
     act:"Activation : 2 tuck flags par côté + gainage latéral",
     vids:["flag1","flag3"],
     exos:[
@@ -392,6 +416,7 @@ const PHASES = [
       {n:"Human flag raises dynamiques", t:"3 × 4 / côté · repos 2 min"},
       {n:"Ab wheel ou dragon flag lesté léger", t:"3 × 8 · repos 90 s"}]},
   { key:"C", title:"Handstand — tenues longues", place:"Espace libre",
+    mat:"Parallettes, espace dégagé",
     act:"Activation : 2 × 20 s HS au mur + équilibre doigts",
     vids:["hs1","hs2"],
     exos:[
@@ -402,6 +427,7 @@ const PHASES = [
       {n:"Pirouettes contrôlées (sortie propre)", t:"8 essais · repos 60 s"},
       {n:"L-sit to tuck handstand sur parallettes (initiation presse)", t:"4 essais · repos 2 min"}]},
   { key:"D", title:"Full body + lest lourd", place:"Salle Basic-Fit",
+    mat:"Salle : ceinture de lest (+15 à +20 kg), barre, poulie",
     act:"Activation : 5 min cardio + gammes progressives",
     vids:["pull1","circuit"],
     exos:[
@@ -417,6 +443,7 @@ const PHASES = [
   crit:"OBJECTIFS FINAUX : Straddle planche 5-10 s · Drapeau complet 5 s/côté · HS libre 30 s · 20 tractions · +20 kg × 5",
   seances:[
   { key:"A", title:"Planche — straddle sans aide", place:"Maison / parc",
+    mat:"Parallettes, élastique (si besoin de soutien)",
     act:"Activation : 2 × 10 s advanced tuck + poignets soignés",
     vids:["planche2","planche1"],
     exos:[
@@ -427,6 +454,7 @@ const PHASES = [
       {n:"Handstand push-ups libres ou quasi-libres", t:"4 × 5 · repos 2 min"},
       {n:"Travail de tes points faibles (note-les !)", t:"10 min"}]},
   { key:"B", title:"Drapeau complet + Tractions", place:"Parc / espalier",
+    mat:"Poteau ou espalier, ceinture de lest (+20 kg)",
     act:"Activation : 2 straddle flags faciles par côté",
     vids:["flag1","flag3"],
     exos:[
@@ -437,6 +465,7 @@ const PHASES = [
       {n:"Tractions lestées +20 kg", t:"4 × 4-5 · repos 3 min"},
       {n:"Circuit gainage : hollow + side star + dragon flag", t:"3 tours · repos 60 s"}]},
   { key:"C", title:"Handstand — 30 s et plus", place:"Partout !",
+    mat:"Parallettes, espace dégagé",
     act:"Activation : poignets + 2 × 15 s HS au mur",
     vids:["hs1","hs2"],
     exos:[
@@ -447,6 +476,7 @@ const PHASES = [
       {n:"Marche sur les mains", t:"5 × 5-10 m · repos 90 s"},
       {n:"Handstand une main : transferts 15 s", t:"3 × / côté · repos 90 s"}]},
   { key:"D", title:"Combos + force", place:"Salle ou parc",
+    mat:"Barre de traction ou poteau, ceinture de lest, élastique",
     act:"Activation : 5 min cardio + gammes",
     vids:["circuit","pull1"],
     exos:[
@@ -517,6 +547,7 @@ function renderHome(){
     nc.innerHTML = `<div class="eyebrow">Prochaine séance</div>
       <h2>Semaine ${next.w} · Séance ${next.s}</h2>
       <p class="meta">${se.title} — ${se.place}</p>
+      <p class="meta mt">🎒 ${se.mat}</p>
       ${isDeload(next.w) ? '<p class="mt"><span class="badge badge-deload">SEMAINE DELOAD — séries ÷ 2</span></p>' : ""}
       <div class="mt"><button class="btn btn-accent" onclick="openSession(${next.w},'${next.s}')">Démarrer la séance →</button></div>`;
   }
@@ -597,6 +628,7 @@ function openSession(w, s){
       <div class="eyebrow">Semaine ${w} / ${TOTAL_WEEKS} · Phase ${pi+1} — ${ph.name}</div>
       <h2>Séance ${s} — ${se.title}</h2>
       <p class="meta">${se.place}</p>
+      <p class="meta mt">🎒 Matériel : ${se.mat}</p>
       ${isDeload(w)?'<p class="mt"><span class="badge badge-deload">DELOAD : fais moitié moins de séries cette semaine</span></p>':''}
       ${done?`<div class="done-banner mt">✓ Séance validée — tu peux la refaire ou la consulter</div>`:''}
     </div>
@@ -708,6 +740,37 @@ document.getElementById("resetBtn").onclick = () => {
     state = { done:{}, logs:{}, warm:{}, str:{} };
     store.clear(); save(); renderBar(); renderHome();
   }
+};
+
+/* ---------- export / import de sauvegarde ---------- */
+function exportSave(){
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const stamp = new Date().toISOString().slice(0,10);
+  a.href = url; a.download = `street-workout-sauvegarde-${stamp}.json`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 2000);
+}
+function importSaveFile(file){
+  const reader = new FileReader();
+  reader.onload = e => {
+    let data;
+    try { data = JSON.parse(e.target.result); }
+    catch(err){ alert("Fichier illisible : ce n'est pas une sauvegarde JSON valide."); return; }
+    if (!data || typeof data !== "object"){ alert("Fichier illisible : ce n'est pas une sauvegarde valide."); return; }
+    if (!confirm("Importer cette sauvegarde ? Ta progression actuelle sur ce téléphone sera remplacée.")) return;
+    state = Object.assign({ done:{}, logs:{}, warm:{}, str:{} }, data);
+    save(); renderBar(); renderHome();
+    alert("Sauvegarde importée ✓");
+  };
+  reader.readAsText(file);
+}
+document.getElementById("exportBtn").onclick = exportSave;
+document.getElementById("importBtn").onclick = () => document.getElementById("importFile").click();
+document.getElementById("importFile").onchange = e => {
+  if (e.target.files[0]) importSaveFile(e.target.files[0]);
+  e.target.value = "";
 };
 
 /* ---------- init ---------- */
@@ -948,25 +1011,42 @@ function soundEnd(){ beep(880,.15,0); beep(880,.15,.22); beep(1318,.6,.44);
   if (navigator.vibrate) navigator.vibrate([250,120,500]); }
 function soundTick(){ beep(660,.08,0); }
 
-const TDUR = {};          // durée choisie par minuteur
-let TRUN = null;          // {key, remaining, int}
-function parseSecs(t){
-  let m = t.match(/(\d+)(?:\s*-\s*(\d+))?\s*s\b/);
-  if (m) return {secs: Math.max(+m[1], +(m[2]||0)), rest: t.slice(0, m.index).includes("repos")};
-  m = t.match(/(\d+)(?:\s*-\s*(\d+))?\s*min\b/);
-  if (m) return {secs: Math.max(+m[1], +(m[2]||0)) * 60, rest: t.slice(0, m.index).includes("repos")};
-  return null;
+const TDUR = {};          // { hold, rest } par minuteur
+let TRUN = null;          // {key, phases, idx, int}
+
+/* extrait la durée de tenue ET la durée de repos explicite ("… repos 90 s") d'un objectif */
+function parseTarget(t){
+  const restM = t.match(/repos\s+(\d+)(?:\s*-\s*(\d+))?\s*(s|min)\b/i);
+  let restSecs = null;
+  if (restM){
+    const v = Math.max(+restM[1], +(restM[2]||0));
+    restSecs = /min/i.test(restM[3]) ? v*60 : v;
+  }
+  const before = restM ? t.slice(0, restM.index) : t;
+  const holdM = before.match(/(\d+)(?:\s*-\s*(\d+))?\s*(s|min)\b/);
+  let holdSecs = null;
+  if (holdM){
+    const v = Math.max(+holdM[1], +(holdM[2]||0));
+    holdSecs = /min/i.test(holdM[3]) ? v*60 : v;
+  }
+  return { holdSecs, restSecs };
 }
 function fmt(s){ return Math.floor(s/60)+":"+String(s%60).padStart(2,"0"); }
+function initialLabel(key){
+  const d = TDUR[key];
+  if (d.hold && d.rest) return "⏱ tenue, puis repos auto — lancer ▶";
+  if (d.hold) return "⏱ chrono tenue — lancer ▶";
+  return "⏱ chrono repos — lancer ▶";
+}
 function timerHTML(target, key){
-  const p = parseSecs(target);
-  if (!p) return "";
-  TDUR[key] = TDUR[key] || p.secs;
-  const lbl = p.rest ? "⏱ chrono repos — lancer ▶" : "⏱ chrono tenue — lancer ▶";
+  const { holdSecs, restSecs } = parseTarget(target);
+  if (!holdSecs && !restSecs) return "";
+  TDUR[key] = TDUR[key] || { hold: holdSecs, rest: restSecs };
+  const d = TDUR[key];
   return `<div class="timer">
     <button class="t-adj" onclick="tAdj('${key}',-5)" aria-label="Moins 5 secondes">−5</button>
     <button class="t-main" id="tm-${key}" onclick="tToggle('${key}')">
-      <span class="tt" id="tt-${key}">${fmt(TDUR[key])}</span><small id="ts-${key}">${lbl}</small>
+      <span class="tt" id="tt-${key}">${fmt(d.hold || d.rest)}</span><small id="ts-${key}">${initialLabel(key)}</small>
     </button>
     <button class="t-adj" onclick="tAdj('${key}',5)" aria-label="Plus 5 secondes">+5</button>
   </div>`;
@@ -976,31 +1056,52 @@ function tStop(){
     const el = document.getElementById("tm-"+TRUN.key);
     if (el){ el.classList.remove("run","fin");
       const tt = document.getElementById("tt-"+TRUN.key), ts = document.getElementById("ts-"+TRUN.key);
-      if (tt) tt.textContent = fmt(TDUR[TRUN.key]);
-      if (ts) ts.textContent = "⏱ lancer ▶";
+      const d = TDUR[TRUN.key];
+      if (tt) tt.textContent = fmt(d.hold || d.rest);
+      if (ts) ts.textContent = initialLabel(TRUN.key);
     }
     TRUN = null;
   }
 }
 function tSet(key, secs){
-  TDUR[key] = secs;
+  TDUR[key] = TDUR[key] || { hold:null, rest:null };
+  TDUR[key].hold = secs; TDUR[key].rest = null;
   if (TRUN && TRUN.key === key) tStop();
   const tt = document.getElementById("tt-"+key);
   if (tt) tt.textContent = fmt(secs);
+  const ts = document.getElementById("ts-"+key);
+  if (ts) ts.textContent = initialLabel(key);
 }
 function tAdj(key, d){
-  tSet(key, Math.max(5, (TDUR[key]||30) + d));
+  const cur = TDUR[key];
+  if (TRUN && TRUN.key === key) tStop();
+  if (cur.hold != null) cur.hold = Math.max(5, cur.hold + d);
+  else cur.rest = Math.max(5, cur.rest + d);
+  const tt = document.getElementById("tt-"+key);
+  if (tt) tt.textContent = fmt(cur.hold || cur.rest);
 }
 function tToggle(key){
   if (TRUN && TRUN.key === key){ tStop(); return; }   // appuyer = arrêter
   tStop();
   // débloque l'audio sur iOS/Android (doit être déclenché par un geste)
   try{ AC = AC || new (window.AudioContext||window.webkitAudioContext)(); if (AC.state==="suspended") AC.resume(); }catch(e){}
+  const d = TDUR[key];
+  const phases = [];
+  if (d.hold) phases.push({ secs:d.hold, kind:"hold" });
+  if (d.rest) phases.push({ secs:d.rest, kind:"rest" });
+  if (!phases.length) return;
+  runPhase(key, phases, 0);
+}
+function runPhase(key, phases, idx){
   const el = document.getElementById("tm-"+key), tt = document.getElementById("tt-"+key), ts = document.getElementById("ts-"+key);
-  let r = TDUR[key];
+  if (!el) return;
+  let r = phases[idx].secs;
   el.classList.add("run"); el.classList.remove("fin");
-  tt.textContent = fmt(r); ts.textContent = "en cours… (appuyer pour arrêter)";
-  beep(990,.1,0);
+  tt.textContent = fmt(r);
+  ts.textContent = idx > 0
+    ? "⏳ repos automatique en cours…"
+    : (phases[idx].kind === "rest" ? "repos en cours… (appuyer pour arrêter)" : "en cours… (appuyer pour arrêter)");
+  beep(idx===0 ? 990 : 770, .1, 0);
   TRUN = { key, int: setInterval(()=>{
     r--;
     if (r > 0){
@@ -1008,13 +1109,20 @@ function tToggle(key){
       if (r <= 3) soundTick();
     } else {
       clearInterval(TRUN.int); TRUN = null;
-      tt.textContent = "0:00"; ts.textContent = "Terminé ! ✓";
-      el.classList.remove("run"); el.classList.add("fin");
-      soundEnd();
-      setTimeout(()=>{ if (!TRUN || TRUN.key !== key){
-        const tt2 = document.getElementById("tt-"+key), ts2 = document.getElementById("ts-"+key), el2 = document.getElementById("tm-"+key);
-        if (tt2){ tt2.textContent = fmt(TDUR[key]); ts2.textContent = "⏱ lancer ▶"; el2.classList.remove("fin"); }
-      }}, 4000);
+      if (idx < phases.length - 1){
+        soundEnd();
+        tt.textContent = "0:00"; ts.textContent = "Tenue terminée — repos auto…";
+        setTimeout(()=>{ runPhase(key, phases, idx+1); }, 1200);
+      } else {
+        tt.textContent = "0:00"; ts.textContent = "Terminé ! ✓";
+        el.classList.remove("run"); el.classList.add("fin");
+        soundEnd();
+        setTimeout(()=>{ if (!TRUN || TRUN.key !== key){
+          const tt2 = document.getElementById("tt-"+key), ts2 = document.getElementById("ts-"+key), el2 = document.getElementById("tm-"+key);
+          const dd = TDUR[key];
+          if (tt2){ tt2.textContent = fmt(dd.hold || dd.rest); ts2.textContent = initialLabel(key); el2.classList.remove("fin"); }
+        }}, 4000);
+      }
     }
   }, 1000) };
 }
