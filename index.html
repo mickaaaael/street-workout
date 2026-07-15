@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#101418">
+<title>Street Workout — Programme 10 mois</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#101418;        /* asphalte */
+  --card:#1a2027;      /* acier */
+  --card2:#232b34;
+  --line:#2e3843;
+  --chalk:#ece7db;     /* craie / magnésie */
+  --dim:#9aa4ae;
+  --accent:#f5c518;    /* jaune chantier */
+  --accent-ink:#171200;
+  --ok:#4ade80;        /* validé */
+  --ok-dark:#14532d;
+  --danger:#f87171;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);color:var(--chalk);
+  font-family:'Inter',system-ui,sans-serif;font-size:16px;line-height:1.45;
+  padding-bottom:calc(72px + env(safe-area-inset-bottom));
+  min-height:100vh;
+}
+h1,h2,h3,.disp{font-family:'Anton',Impact,sans-serif;font-weight:400;letter-spacing:.02em;text-transform:uppercase}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+.wrap{max-width:640px;margin:0 auto;padding:16px 14px}
+
+/* ---------- header ---------- */
+header{padding:18px 14px 6px;max-width:640px;margin:0 auto}
+header h1{font-size:clamp(26px,7vw,34px);line-height:1.05}
+header h1 span{color:var(--accent)}
+header .sub{color:var(--dim);font-size:13px;margin-top:2px}
+
+/* ---------- barre de progression "barre de traction" ---------- */
+.bar-rail{position:relative;margin:16px 0 4px;height:34px}
+.bar-rail .pipe{position:absolute;left:0;right:0;top:14px;height:6px;border-radius:3px;
+  background:linear-gradient(90deg,#3a444f,#4a5661);box-shadow:inset 0 2px 2px rgba(0,0,0,.5)}
+.bar-rail .fill{position:absolute;left:0;top:14px;height:6px;border-radius:3px;background:var(--accent);transition:width .5s ease}
+.bar-rail .grip{position:absolute;top:6px;width:22px;height:22px;border-radius:50%;
+  background:var(--chalk);border:4px solid var(--accent);transform:translateX(-50%);transition:left .5s ease;
+  box-shadow:0 2px 8px rgba(0,0,0,.6)}
+.bar-rail .anchor{position:absolute;top:8px;width:4px;height:18px;background:#4a5661;border-radius:2px}
+.bar-rail .anchor.l{left:0}.bar-rail .anchor.r{right:0}
+.bar-meta{display:flex;justify-content:space-between;font-size:12px;color:var(--dim);margin-bottom:14px}
+.bar-meta b{color:var(--chalk)}
+
+/* ---------- cards ---------- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+.eyebrow{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.card h2{font-size:22px;margin:4px 0 2px}
+.card .meta{color:var(--dim);font-size:13px}
+
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
+  min-height:52px;border-radius:12px;font-size:16px;font-weight:800;transition:transform .06s}
+.btn:active{transform:scale(.98)}
+.btn-accent{background:var(--accent);color:var(--accent-ink)}
+.btn-ghost{background:var(--card2);color:var(--chalk);border:1px solid var(--line)}
+.btn-ok{background:var(--ok);color:#06240f}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+
+.badge{display:inline-block;font-size:11px;font-weight:800;padding:3px 9px;border-radius:99px;letter-spacing:.06em}
+.badge-deload{background:#3b2f00;color:var(--accent);border:1px solid #5c4a00}
+.badge-done{background:var(--ok-dark);color:var(--ok)}
+.badge-phase{background:var(--card2);color:var(--dim);border:1px solid var(--line)}
+
+/* ---------- semaines ---------- */
+.week{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden;background:var(--card)}
+.week-head{display:flex;align-items:center;gap:10px;width:100%;padding:13px 14px;text-align:left;font-size:15px}
+.week-head .wnum{font-family:'Anton';font-size:17px;min-width:64px}
+.week-head .wtag{margin-left:auto;display:flex;gap:6px;align-items:center}
+.week-head .chev{color:var(--dim);transition:transform .2s}
+.week.open .chev{transform:rotate(90deg)}
+.week-body{display:none;border-top:1px solid var(--line)}
+.week.open .week-body{display:block}
+.sess-row{display:flex;align-items:center;gap:10px;width:100%;padding:12px 14px;text-align:left;
+  border-bottom:1px solid var(--line);font-size:14.5px}
+.sess-row:last-child{border-bottom:none}
+.sess-row .dot{width:26px;height:26px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;
+  border:2px solid var(--line);font-size:12px;font-weight:800;color:var(--dim)}
+.sess-row.done .dot{background:var(--ok);border-color:var(--ok);color:#06240f}
+.sess-row.current .dot{border-color:var(--accent);color:var(--accent)}
+.sess-row .go{margin-left:auto;color:var(--dim)}
+.dots{display:flex;gap:4px}
+.dots i{width:8px;height:8px;border-radius:50%;background:var(--line)}
+.dots i.on{background:var(--ok)}
+
+/* ---------- vue séance ---------- */
+.sec-title{display:flex;align-items:center;gap:10px;margin:22px 0 10px}
+.sec-title h3{font-size:18px}
+.sec-title .n{width:28px;height:28px;flex:none;border-radius:8px;background:var(--accent);color:var(--accent-ink);
+  display:flex;align-items:center;justify-content:center;font-family:'Anton';font-size:15px}
+.check{display:flex;gap:12px;align-items:flex-start;padding:12px 12px;border:1px solid var(--line);
+  border-radius:10px;margin-bottom:8px;background:var(--card);width:100%;text-align:left;font-size:14.5px}
+.check .box{width:24px;height:24px;flex:none;border-radius:7px;border:2px solid var(--line);margin-top:1px;
+  display:flex;align-items:center;justify-content:center;color:transparent;font-weight:800}
+.check.on{border-color:var(--ok-dark)}
+.check.on .box{background:var(--ok);border-color:var(--ok);color:#06240f}
+.check.on span{color:var(--dim);text-decoration:line-through}
+
+.exo{border:1px solid var(--line);border-radius:12px;background:var(--card);margin-bottom:10px;padding:13px 13px 11px}
+.exo .name{font-weight:600;font-size:15px}
+.exo .target{color:var(--accent);font-size:13.5px;font-weight:600;margin:3px 0 8px}
+.exo input{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:9px;color:var(--chalk);
+  padding:11px 12px;font-size:16px;font-family:inherit}
+.exo input::placeholder{color:#5c6670}
+.exo input:focus{outline:2px solid var(--accent);border-color:transparent}
+
+/* ---------- vidéos ---------- */
+.vid{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:12px;background:#000}
+.vid .thumb{position:relative;display:block;width:100%;aspect-ratio:16/9;background-size:cover;background-position:center;border:none;padding:0}
+.vid .thumb::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 40%,rgba(0,0,0,.75))}
+.vid .play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:60px;height:44px;
+  background:var(--accent);border-radius:12px;display:flex;align-items:center;justify-content:center;z-index:2}
+.vid .play::after{content:"";border-style:solid;border-width:9px 0 9px 15px;border-color:transparent transparent transparent var(--accent-ink)}
+.vid .vt{position:absolute;left:12px;right:12px;bottom:10px;z-index:2;color:#fff;font-size:13.5px;font-weight:600;text-align:left;text-shadow:0 1px 4px #000}
+.vid iframe{display:block;width:100%;aspect-ratio:16/9;border:none}
+
+/* ---------- bas de séance ---------- */
+.validate-zone{position:sticky;bottom:calc(64px + env(safe-area-inset-bottom));padding:10px 0;
+  background:linear-gradient(transparent,var(--bg) 40%)}
+.done-banner{border:1px solid var(--ok-dark);background:#0d2416;color:var(--ok);border-radius:12px;
+  padding:14px;text-align:center;font-weight:800;margin-bottom:10px}
+
+/* ---------- nav ---------- */
+nav{position:fixed;bottom:0;left:0;right:0;background:#0b0f13;border-top:1px solid var(--line);
+  display:flex;z-index:50;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;padding:10px 0 9px;display:flex;flex-direction:column;align-items:center;gap:3px;
+  font-size:11px;font-weight:600;color:var(--dim)}
+nav button.on{color:var(--accent)}
+nav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+.view{display:none}.view.on{display:block}
+.small{font-size:12.5px;color:var(--dim)}
+.mt{margin-top:10px}
+.crit{border-left:3px solid var(--accent);padding:8px 12px;background:var(--card2);border-radius:0 10px 10px 0;
+  font-size:13.5px;margin:10px 0}
+.link-danger{color:var(--danger);font-size:13px;text-decoration:underline;padding:10px}
+.center{text-align:center}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>STREET<span>WORKOUT</span></h1>
+  <div class="sub">Planche · Drapeau · Handstand · Tractions — 10 mois</div>
+</header>
+
+<div class="wrap">
+  <!-- barre de progression -->
+  <div class="bar-rail" aria-hidden="true">
+    <span class="anchor l"></span><span class="anchor r"></span>
+    <div class="pipe"></div>
+    <div class="fill" id="barFill" style="width:0%"></div>
+    <div class="grip" id="barGrip" style="left:0%"></div>
+  </div>
+  <div class="bar-meta"><span><b id="pctDone">0%</b> du programme</span><span id="countDone">0 / 160 séances</span></div>
+
+  <!-- ================= VUE ACCUEIL ================= -->
+  <section class="view on" id="view-home">
+    <div class="card" id="nextCard"></div>
+    <div class="card" id="phaseCard"></div>
+    <h2 class="disp" style="font-size:20px;margin:20px 0 10px">Les 40 semaines</h2>
+    <div id="weekList"></div>
+    <p class="center mt"><button class="link-danger" id="resetBtn">Réinitialiser toute ma progression</button></p>
+    <p class="small center mt">Ta progression est enregistrée dans le navigateur de ce téléphone (localStorage). Si tu vides les données du navigateur, elle sera perdue.</p>
+  </section>
+
+  <!-- ================= VUE SÉANCE ================= -->
+  <section class="view" id="view-session"></section>
+
+  <!-- ================= VUE VIDÉOS ================= -->
+  <section class="view" id="view-videos">
+    <h2 class="disp" style="font-size:20px;margin:6px 0 12px">Bibliothèque vidéos</h2>
+    <p class="small" style="margin-bottom:14px">Tutoriels en français. Regarde la vidéo de ta figure à chaque changement de phase : tu y verras des détails nouveaux.</p>
+    <div id="videoLib"></div>
+  </section>
+</div>
+
+<nav>
+  <button id="nav-home" class="on" onclick="show('home')">
+    <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2z"/></svg>
+    Accueil</button>
+  <button id="nav-session" onclick="openCurrent()">
+    <svg viewBox="0 0 24 24"><path d="M6 5v14M18 5v14M2 9v6M22 9v6M6 12h12"/></svg>
+    Séance</button>
+  <button id="nav-videos" onclick="show('videos')">
+    <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="M10 9l5 3-5 3z"/></svg>
+    Vidéos</button>
+</nav>
+
+<script>
+/* =====================================================================
+   DONNÉES DU PROGRAMME — 5 phases × 8 semaines × 4 séances
+===================================================================== */
+const VIDEOS = {
+  warmup:   {id:"aZQj621Bzus", t:"Échauffement & renforcement des poignets (Brieuc Le Dantec)"},
+  circuit:  {id:"lxjkuPtTC2E", t:"Circuit d'introduction calisthenics tout le corps"},
+  planche1: {id:"RhvSF1NQa4E", t:"Comment apprendre la planche rapidement"},
+  planche2: {id:"m4O6EWYZmWk", t:"5 exercices pour débuter la full planche"},
+  flag1:    {id:"lV0AXlob_5U", t:"Comment j'ai eu mon drapeau — Eric Flag"},
+  flag2:    {id:"iEmSz0YpgMk", t:"5 minutes pour apprendre le drapeau humain"},
+  flag3:    {id:"8nQSfEtRr1Y", t:"Tutoriel drapeau humain tout niveau (Alex Levand)"},
+  hs1:      {id:"xxxiTJ79PsU", t:"Comment j'ai eu mon handstand — Eric Flag"},
+  hs2:      {id:"5zhlDW1WUw8", t:"Routine handstand débutants — Eric Flag"},
+  hs3:      {id:"hgiH3htfwLk", t:"Apprendre le handstand en toute sécurité (chuter)"},
+  pull1:    {id:"0i17S-5el2k", t:"Entraînement aux tractions — Major Gérald"},
+};
+
+const WARMUP_BASE = [
+  "Cardio léger 2-3 min : corde à sauter, jumping jacks ou montées de genoux",
+  "Rotations articulaires du haut vers le bas : nuque, épaules, coudes, poignets, buste, bassin, genoux, chevilles (10 reps chacune)",
+  "Poignets au sol : paumes doigts vers l'avant puis vers toi, balancements doux, dos de la main, bout des doigts (2 min)",
+  "Épaules à l'élastique : band pull-aparts ×15, dislocations ×10, rotations externes ×12/bras",
+];
+const STRETCH = [
+  "Poignets : fléchisseurs et extenseurs, 30 s chaque position",
+  "Épaules / pectoraux : bras contre un cadre de porte 30 s par côté, puis suspension passive à la barre 30 s",
+  "Dorsaux : posture de l'enfant bras tendus, 45 s",
+  "Obliques et flancs (spécial drapeau) : étirement latéral debout, 30 s par côté",
+  "Ischio-jambiers : pike au sol 45 s — Hanches : fente basse 30 s par côté",
+  "Respiration calme 1 min pour redescendre",
+];
+
+/* Chaque phase : nom, objectif, critères, 4 séances (titre, lieu, activation, vidéos, exos[{n,t}]) */
+const PHASES = [
+{ name:"Fondations & conditionnement", weeks:[1,8],
+  goal:"Blinder poignets, épaules et gainage. Apprendre les positions de base et construire du volume en tractions.",
+  crit:"Pseudo-planche lean 3×20 s · Frog stand 30 s · Handstand mur 60 s · Gainage latéral 60 s/côté · 4×8 tractions",
+  seances:[
+  { key:"A", title:"Poussée + bases Planche", place:"Maison (parallettes) ou salle",
+    act:"Activation : 2 séries légères de pompes + 2 × 10 s de planche lean facile",
+    vids:["planche1","warmup"],
+    exos:[
+      {n:"Pseudo-planche lean sur parallettes (épaules très en avant, corps gainé)", t:"4 × 15-20 s · repos 90 s"},
+      {n:"Pompes pseudo-planche (mains au niveau des hanches)", t:"4 × 8-10 · repos 90 s"},
+      {n:"Frog stand / crow pose (genoux posés sur les coudes)", t:"4 × max, viser 20-30 s · repos 60 s"},
+      {n:"Pompes lestées (sac à dos) ou pieds surélevés", t:"3 × 12-15 · repos 90 s"},
+      {n:"Dips sur parallettes ou entre deux supports", t:"3 × 8-12 · repos 90 s"},
+      {n:"Élévations latérales élastique ou haltères", t:"3 × 15 · repos 60 s"}]},
+  { key:"B", title:"Tirage + bases Drapeau", place:"Maison (barre) ou salle",
+    act:"Activation : 2 × 3 tractions faciles à l'élastique + 20 s de suspension active",
+    vids:["flag2","pull1"],
+    exos:[
+      {n:"Tractions pronation strictes (garde 2 reps de réserve)", t:"5 × 6-8 · repos 2 min"},
+      {n:"Tractions prise large", t:"3 × 6-8 · repos 2 min"},
+      {n:"Gainage latéral (side plank), bras tendu si possible", t:"4 × 30-45 s / côté · repos 60 s"},
+      {n:"Relevés de jambes suspendu (genoux puis jambes tendues)", t:"4 × 8-12 · repos 90 s"},
+      {n:"Rowing élastique ou poulie basse", t:"3 × 12 · repos 60 s"},
+      {n:"Suspension une main (alternée) pour la poigne", t:"3 × 10-15 s / main · repos 60 s"}]},
+  { key:"C", title:"Handstand + Gainage", place:"Maison, mur dégagé",
+    act:"Activation : 2 × 20 s de handstand dos au mur facile + 10 scapula push-ups",
+    vids:["hs2","hs3"],
+    exos:[
+      {n:"Montée en handstand ventre face au mur (wall walk) + tenue", t:"5 montées, tenir 20-30 s · repos 90 s"},
+      {n:"Handstand dos au mur, chercher l'alignement (regard entre les mains)", t:"4 × 30-45 s · repos 90 s"},
+      {n:"Décollements d'un pied du mur (transferts de poids)", t:"4 × 5 / côté · repos 60 s"},
+      {n:"Pike push-ups (pompes en V, fesses hautes)", t:"4 × 8-10 · repos 90 s"},
+      {n:"Hollow body hold + superman hold", t:"3 × 30 s chaque · repos 45 s"},
+      {n:"L-sit sur parallettes (genoux pliés si besoin)", t:"4 × 10-15 s · repos 60 s"}]},
+  { key:"D", title:"Full body + technique", place:"Salle Basic-Fit conseillée",
+    act:"Activation : 5 min vélo/rameur + 2 séries légères du premier exercice",
+    vids:["circuit","pull1"],
+    exos:[
+      {n:"Tractions assistées machine (légères) : technique parfaite", t:"3 × 10 · repos 90 s"},
+      {n:"Développé militaire haltères ou barre", t:"4 × 8-10 · repos 2 min"},
+      {n:"Tirage vertical poulie prise large", t:"3 × 10-12 · repos 90 s"},
+      {n:"Squats gobelet + fentes", t:"3 × 12 · repos 90 s"},
+      {n:"Pallof press à la poulie (anti-rotation, spécial drapeau)", t:"3 × 10 / côté · repos 60 s"},
+      {n:"Dragon flag négatives sur banc (descente 5 s)", t:"3 × 4-6 · repos 2 min"}]}]},
+
+{ name:"Tuck planche, tuck flag & mur", weeks:[9,16],
+  goal:"Décoller du sol : tuck planche, tuck flag, handstand mur 60 s solide. Monter à 10-12 tractions.",
+  crit:"Tuck planche 3×12-15 s · Tuck flag 8-10 s/côté · HS mur 60 s + décollés 10 s · 4×10 tractions · Dragon flag 3×6",
+  seances:[
+  { key:"A", title:"Planche — tuck", place:"Maison (parallettes + élastique)",
+    act:"Activation : 2 × 10 s de planche lean + 10 scapula push-ups",
+    vids:["planche1","planche2"],
+    exos:[
+      {n:"Tuck planche sur parallettes (genoux à la poitrine, hanches à hauteur d'épaules, bras TENDUS)", t:"6 × max, viser 8-15 s · repos 2 min"},
+      {n:"Tuck planche avec élastique sous les pieds (position parfaite)", t:"4 × 15 s · repos 90 s"},
+      {n:"Pompes pseudo-planche lestées", t:"4 × 8 · repos 2 min"},
+      {n:"Planche lean extrême (épaules le plus loin possible)", t:"3 × 15 s · repos 90 s"},
+      {n:"Dips lestés", t:"4 × 8 · repos 2 min"},
+      {n:"Zanetti press à l'élastique (bras tendus)", t:"3 × 12 · repos 60 s"}]},
+  { key:"B", title:"Drapeau — tuck flag + Tractions", place:"Maison, parc ou espalier",
+    act:"Activation : 2 × 3 tractions faciles + 15 s de gainage latéral chaque côté",
+    vids:["flag1","flag2"],
+    exos:[
+      {n:"Tractions strictes (+1 rep chaque semaine)", t:"5 × 8 → 10 · repos 2 min"},
+      {n:"Tuck flag : main haute pronation, main basse supination, genoux repliés", t:"6 × max / côté, viser 5-10 s · repos 2 min"},
+      {n:"Drapeau incliné : pieds posés sur un support, corps en diagonale", t:"4 × 10-15 s / côté · repos 90 s"},
+      {n:"Archer pull-ups à l'élastique", t:"3 × 5 / côté · repos 2 min"},
+      {n:"Gainage latéral lesté ou surélevé", t:"3 × 45 s / côté · repos 60 s"},
+      {n:"Relevés de jambes tendues vers la barre (toes to bar)", t:"4 × 8-10 · repos 90 s"}]},
+  { key:"C", title:"Handstand — premiers décollés", place:"Maison, mur dégagé",
+    act:"Activation : 2 × 20 s HS face au mur + mobilité poignets",
+    vids:["hs2","hs3"],
+    exos:[
+      {n:"HS ventre face au mur : décoller un pied puis les deux brièvement", t:"6 × 30 s avec décollés · repos 90 s"},
+      {n:"Kick-up contre le mur + apprendre à chuter en roue", t:"10 tentatives · repos 60 s"},
+      {n:"Heel pulls : dos au mur, décoller les talons et tenir", t:"5 × 5-10 s · repos 90 s"},
+      {n:"Pike push-ups pieds surélevés", t:"4 × 8 · repos 2 min"},
+      {n:"Wall handstand shrugs (haussements d'épaules à l'envers)", t:"3 × 8 · repos 90 s"},
+      {n:"L-sit jambes tendues", t:"4 × 10-15 s · repos 60 s"}]},
+  { key:"D", title:"Full body + lest léger", place:"Salle Basic-Fit",
+    act:"Activation : 5 min cardio + 2 séries légères de tractions",
+    vids:["pull1","circuit"],
+    exos:[
+      {n:"Tractions lestées +5 kg", t:"4 × 5 · repos 2-3 min"},
+      {n:"Développé militaire", t:"4 × 6-8 · repos 2 min"},
+      {n:"Rowing barre ou haltère", t:"4 × 10 · repos 90 s"},
+      {n:"Dragon flag (négatives puis tenues)", t:"4 × 5 · repos 2 min"},
+      {n:"Pallof press + rotations au câble", t:"3 × 10 / côté · repos 60 s"},
+      {n:"Face pulls à la poulie (santé des épaules)", t:"3 × 15 · repos 60 s"}]}]},
+
+{ name:"Advanced tuck & premiers équilibres", weeks:[17,24],
+  goal:"Ouvrir les hanches en planche, tenir tes premières secondes de handstand libre, drapeau une jambe pliée. 15 tractions.",
+  crit:"Advanced tuck 3×10 s · Drapeau 1 jambe pliée 5 s/côté · HS libre 5-10 s régulier · 3×12-15 tractions · +10 kg × 5",
+  seances:[
+  { key:"A", title:"Planche — advanced tuck", place:"Maison (parallettes + élastique)",
+    act:"Activation : 2 × 10 s tuck planche facile + poignets",
+    vids:["planche2","planche1"],
+    exos:[
+      {n:"Advanced tuck planche (dos plat, genoux écartés du buste)", t:"6 × max, viser 6-10 s · repos 2-3 min"},
+      {n:"Straddle planche à l'élastique (jambes écartées tendues)", t:"4 × 8-12 s · repos 2 min"},
+      {n:"Tuck planche push-ups (amplitude partielle ok)", t:"4 × 3-5 · repos 2 min"},
+      {n:"Pompes planche à l'élastique", t:"3 × 6 · repos 2 min"},
+      {n:"Handstand push-ups contre le mur (ou pike surélevé)", t:"4 × 5-8 · repos 2 min"},
+      {n:"Curl bras tendus à l'élastique (protection des coudes)", t:"3 × 12 · repos 60 s"}]},
+  { key:"B", title:"Drapeau — une jambe + Tractions", place:"Parc / espalier / salle",
+    act:"Activation : 2 tuck flags faciles par côté + suspension active",
+    vids:["flag1","flag3"],
+    exos:[
+      {n:"Drapeau une jambe pliée, une tendue", t:"6 × max / côté, viser 3-6 s · repos 2-3 min"},
+      {n:"Tuck flag raises : monter-descendre dynamique", t:"4 × 4-6 / côté · repos 2 min"},
+      {n:"Tractions : pyramide 4-6-8-10-8-6-4 (adapte)", t:"1 pyramide · repos 90 s entre paliers"},
+      {n:"Tractions lestées +10 kg", t:"4 × 4-5 · repos 3 min"},
+      {n:"Side plank étoile (jambe et bras levés)", t:"3 × 20-30 s / côté · repos 60 s"},
+      {n:"Essuie-glaces suspendu (windshield wipers)", t:"3 × 6-8 · repos 90 s"}]},
+  { key:"C", title:"Handstand — libre !", place:"Maison ou salle, espace libre",
+    act:"Activation : 2 × 20 s HS au mur + poignets soignés",
+    vids:["hs1","hs3"],
+    exos:[
+      {n:"Tentatives de handstand libre (kick-up, à 1 m d'un mur au début)", t:"15-20 tentatives, chercher 3-5 s · repos 60-90 s"},
+      {n:"HS face au mur : tenues longues alignées", t:"3 × 45-60 s · repos 2 min"},
+      {n:"Toe pulls / heel pulls alternés (jeu d'équilibre)", t:"4 × 5 · repos 90 s"},
+      {n:"Handstand push-ups au mur", t:"4 × 6-8 · repos 2 min"},
+      {n:"Marche latérale en handstand le long du mur", t:"3 allers-retours · repos 90 s"},
+      {n:"V-ups + hollow rocks", t:"3 × 15 · repos 45 s"}]},
+  { key:"D", title:"Full body + lest moyen", place:"Salle Basic-Fit",
+    act:"Activation : 5 min cardio + gammes de tractions",
+    vids:["pull1","circuit"],
+    exos:[
+      {n:"Tractions lestées progressives +10 à +15 kg", t:"5 × 3-5 · repos 3 min"},
+      {n:"Développé militaire debout", t:"4 × 6 · repos 2 min"},
+      {n:"Tirage horizontal poulie", t:"4 × 10 · repos 90 s"},
+      {n:"Dragon flag complet", t:"4 × 6 · repos 2 min"},
+      {n:"Soulevé de terre roumain ou hip thrust", t:"3 × 10 · repos 2 min"},
+      {n:"Rotations externes + face pulls", t:"3 × 15 · repos 60 s"}]}]},
+
+{ name:"Straddle & drapeau jambes tendues", weeks:[25,32],
+  goal:"Straddle planche de moins en moins assistée, straddle flag, handstand libre 15-20 s. 17-18 tractions.",
+  crit:"Straddle planche élastique fin 3×8 s · Straddle flag 3-5 s/côté · HS libre 15-20 s · 3×15 tractions · +15 kg × 5",
+  seances:[
+  { key:"A", title:"Planche — straddle", place:"Maison (élastiques fins)",
+    act:"Activation : 2 × 8 s advanced tuck facile + poignets",
+    vids:["planche2","planche1"],
+    exos:[
+      {n:"Straddle planche avec élastique de plus en plus fin", t:"6 × 6-10 s · repos 3 min"},
+      {n:"Tentatives straddle planche SANS aide (1-2 s comptent !)", t:"5 tentatives · repos 2 min"},
+      {n:"Advanced tuck : tenues longues", t:"4 × 10-12 s · repos 2 min"},
+      {n:"Planche push-ups à l'élastique", t:"4 × 4-6 · repos 2 min"},
+      {n:"Maltese lean léger (épaules très avancées)", t:"3 × 8 s · repos 2 min"},
+      {n:"Handstand push-ups amplitude complète (parallettes au mur)", t:"4 × 5-6 · repos 2 min"}]},
+  { key:"B", title:"Drapeau — straddle flag + Tractions", place:"Parc / espalier",
+    act:"Activation : 2 tuck flags par côté + gainage latéral",
+    vids:["flag1","flag3"],
+    exos:[
+      {n:"Straddle flag (drapeau jambes écartées)", t:"6 × max / côté · repos 2-3 min"},
+      {n:"Drapeau une jambe tendue : tenues longues", t:"4 × 5-8 s / côté · repos 2 min"},
+      {n:"Flag negatives : partir jambes en haut, descendre lentement", t:"4 × 3 / côté · repos 2 min"},
+      {n:"Tractions : 3 × max (objectif 15) + 2 × 8 lestées +10 kg", t:"5 séries · repos 2-3 min"},
+      {n:"Human flag raises dynamiques", t:"3 × 4 / côté · repos 2 min"},
+      {n:"Ab wheel ou dragon flag lesté léger", t:"3 × 8 · repos 90 s"}]},
+  { key:"C", title:"Handstand — tenues longues", place:"Espace libre",
+    act:"Activation : 2 × 20 s HS au mur + équilibre doigts",
+    vids:["hs1","hs2"],
+    exos:[
+      {n:"Handstand libre : tenues (objectif 15-20 s), entrées variées", t:"15 min de pratique · repos libre"},
+      {n:"Handstand une main en transfert (épaules décalées)", t:"4 × 10 s / côté · repos 90 s"},
+      {n:"Handstand sur parallettes", t:"5 tentatives · repos 90 s"},
+      {n:"Handstand push-ups : amplitude maximale", t:"4 × 6 · repos 2 min"},
+      {n:"Pirouettes contrôlées (sortie propre)", t:"8 essais · repos 60 s"},
+      {n:"L-sit to tuck handstand sur parallettes (initiation presse)", t:"4 essais · repos 2 min"}]},
+  { key:"D", title:"Full body + lest lourd", place:"Salle Basic-Fit",
+    act:"Activation : 5 min cardio + gammes progressives",
+    vids:["pull1","circuit"],
+    exos:[
+      {n:"Tractions lestées lourdes +15 à +20 kg", t:"5 × 3 · repos 3 min"},
+      {n:"Développé militaire ou push press", t:"4 × 5-6 · repos 2-3 min"},
+      {n:"Rowing lourd", t:"4 × 8 · repos 2 min"},
+      {n:"Pallof press lourd + side plank lesté", t:"3 × 10 / côté · repos 90 s"},
+      {n:"Squats ou presse", t:"3 × 10 · repos 2 min"},
+      {n:"Mobilité épaules / poignets approfondie", t:"10 min"}]}]},
+
+{ name:"Consolidation — figures complètes", weeks:[33,40],
+  goal:"Straddle planche sans aide, drapeau complet, handstand libre 30 s, 20 tractions. On consolide et on filme !",
+  crit:"OBJECTIFS FINAUX : Straddle planche 5-10 s · Drapeau complet 5 s/côté · HS libre 30 s · 20 tractions · +20 kg × 5",
+  seances:[
+  { key:"A", title:"Planche — straddle sans aide", place:"Maison / parc",
+    act:"Activation : 2 × 10 s advanced tuck + poignets soignés",
+    vids:["planche2","planche1"],
+    exos:[
+      {n:"Straddle planche sans aide : tenues maximales", t:"6-8 × max · repos 3 min"},
+      {n:"Full planche à l'élastique (jambes serrées)", t:"4 × 6-8 s · repos 2-3 min"},
+      {n:"Straddle planche push-ups (élastique si besoin)", t:"3 × 3-5 · repos 2-3 min"},
+      {n:"Advanced tuck : tenue de contrôle 20 s", t:"2 × 20 s · repos 2 min"},
+      {n:"Handstand push-ups libres ou quasi-libres", t:"4 × 5 · repos 2 min"},
+      {n:"Travail de tes points faibles (note-les !)", t:"10 min"}]},
+  { key:"B", title:"Drapeau complet + Tractions", place:"Parc / espalier",
+    act:"Activation : 2 straddle flags faciles par côté",
+    vids:["flag1","flag3"],
+    exos:[
+      {n:"Drapeau complet (jambes serrées tendues) : tenues", t:"6 × max / côté · repos 3 min"},
+      {n:"Straddle flag : tenues longues 8-10 s", t:"3 × / côté · repos 2 min"},
+      {n:"Flag negatives très lentes (5 s de descente)", t:"3 × 3 / côté · repos 2 min"},
+      {n:"Tractions : test 1 × max (objectif 20) puis 3 × 12", t:"4 séries · repos 3 min"},
+      {n:"Tractions lestées +20 kg", t:"4 × 4-5 · repos 3 min"},
+      {n:"Circuit gainage : hollow + side star + dragon flag", t:"3 tours · repos 60 s"}]},
+  { key:"C", title:"Handstand — 30 s et plus", place:"Partout !",
+    act:"Activation : poignets + 2 × 15 s HS au mur",
+    vids:["hs1","hs2"],
+    exos:[
+      {n:"Handstand libre : tenues 30 s, entrées variées (kick-up, tuck-up)", t:"15 min · repos libre"},
+      {n:"Handstand sur parallettes : tenues", t:"5 × max · repos 2 min"},
+      {n:"Press handstand progressions (élastique ou pieds surélevés)", t:"5 essais · repos 2 min"},
+      {n:"Handstand push-ups : volume", t:"5 × 5-6 · repos 2 min"},
+      {n:"Marche sur les mains", t:"5 × 5-10 m · repos 90 s"},
+      {n:"Handstand une main : transferts 15 s", t:"3 × / côté · repos 90 s"}]},
+  { key:"D", title:"Combos + force", place:"Salle ou parc",
+    act:"Activation : 5 min cardio + gammes",
+    vids:["circuit","pull1"],
+    exos:[
+      {n:"Circuit figures : HS 15 s + 10 tractions + tuck flag 8 s + straddle planche max", t:"3 tours · repos 3 min"},
+      {n:"Tractions lestées lourdes", t:"4 × 3-4 · repos 3 min"},
+      {n:"Développé militaire", t:"4 × 6 · repos 2 min"},
+      {n:"Muscle-up progressions à l'élastique (la prochaine étape !)", t:"4 × 3 · repos 2 min"},
+      {n:"Gainage lesté", t:"3 séries · repos 90 s"},
+      {n:"Mobilité complète + étirements longs", t:"10 min"}]}]}
+];
+</script>
+<script>
+/* =====================================================================
+   LOGIQUE — progression, vues, sauvegarde
+===================================================================== */
+const TOTAL_WEEKS = 40, SKEYS = ["A","B","C","D"];
+const TOTAL = TOTAL_WEEKS * 4;
+
+/* stockage sûr : localStorage sur GitHub Pages, mémoire en secours */
+const store = (() => {
+  let ok = false, mem = {};
+  try { localStorage.setItem("__t","1"); localStorage.removeItem("__t"); ok = true; } catch(e){}
+  return {
+    get(k){ try { return ok ? localStorage.getItem(k) : (mem[k] ?? null); } catch(e){ return mem[k] ?? null; } },
+    set(k,v){ try { if(ok) localStorage.setItem(k,v); else mem[k]=v; } catch(e){ mem[k]=v; } },
+    clear(){ try { if(ok){ Object.keys(localStorage).filter(k=>k.startsWith("sw_")).forEach(k=>localStorage.removeItem(k)); } } catch(e){} mem={}; }
+  };
+})();
+
+let state = { done:{}, logs:{}, warm:{}, str:{} };
+(function load(){
+  try { const s = store.get("sw_state"); if (s) state = Object.assign(state, JSON.parse(s)); } catch(e){}
+})();
+function save(){ store.set("sw_state", JSON.stringify(state)); }
+
+const phaseOfWeek = w => PHASES.find(p => w >= p.weeks[0] && w <= p.weeks[1]);
+const phaseIndex  = w => PHASES.findIndex(p => w >= p.weeks[0] && w <= p.weeks[1]);
+const isDeload    = w => w % 4 === 0;
+const sid = (w,s) => `s${w}${s}`;
+
+function countDone(){ return Object.keys(state.done).length; }
+function firstPending(){
+  for (let w=1; w<=TOTAL_WEEKS; w++)
+    for (const s of SKEYS)
+      if (!state.done[sid(w,s)]) return {w, s};
+  return null;
+}
+
+/* ---------- barre de progression ---------- */
+function renderBar(){
+  const n = countDone(), pct = Math.round(100*n/TOTAL);
+  document.getElementById("barFill").style.width = pct+"%";
+  document.getElementById("barGrip").style.left = pct+"%";
+  document.getElementById("pctDone").textContent = pct+"%";
+  document.getElementById("countDone").textContent = `${n} / ${TOTAL} séances`;
+}
+
+/* ---------- accueil ---------- */
+function renderHome(){
+  const next = firstPending();
+  const nc = document.getElementById("nextCard");
+  if (!next){
+    nc.innerHTML = `<div class="eyebrow">Programme terminé</div>
+      <h2>Bravo, champion 🏆</h2>
+      <p class="meta">160 séances validées. Filme tes figures et compare avec le mois 1 !</p>`;
+  } else {
+    const ph = phaseOfWeek(next.w), se = ph.seances[SKEYS.indexOf(next.s)];
+    nc.innerHTML = `<div class="eyebrow">Prochaine séance</div>
+      <h2>Semaine ${next.w} · Séance ${next.s}</h2>
+      <p class="meta">${se.title} — ${se.place}</p>
+      ${isDeload(next.w) ? '<p class="mt"><span class="badge badge-deload">SEMAINE DELOAD — séries ÷ 2</span></p>' : ""}
+      <div class="mt"><button class="btn btn-accent" onclick="openSession(${next.w},'${next.s}')">Démarrer la séance →</button></div>`;
+  }
+  const pi = next ? phaseIndex(next.w) : 4, ph = PHASES[pi];
+  document.getElementById("phaseCard").innerHTML = `
+    <div class="eyebrow">Phase ${pi+1} / 5 · Semaines ${ph.weeks[0]}-${ph.weeks[1]}</div>
+    <h2 style="font-size:19px">${ph.name}</h2>
+    <p class="meta mt">${ph.goal}</p>
+    <div class="crit"><b>Critères pour passer à la phase suivante :</b><br>${ph.crit}</div>`;
+  renderWeeks(next);
+}
+
+function renderWeeks(next){
+  const el = document.getElementById("weekList");
+  let html = "";
+  for (let w=1; w<=TOTAL_WEEKS; w++){
+    const pi = phaseIndex(w);
+    const doneCount = SKEYS.filter(s=>state.done[sid(w,s)]).length;
+    const isCur = next && next.w === w;
+    const dots = SKEYS.map(s=>`<i class="${state.done[sid(w,s)]?'on':''}"></i>`).join("");
+    html += `<div class="week ${isCur?'open':''}" id="wk${w}">
+      <button class="week-head" onclick="toggleWeek(${w})">
+        <span class="wnum">SEM ${w}</span>
+        <span class="dots">${dots}</span>
+        <span class="wtag">
+          ${isDeload(w)?'<span class="badge badge-deload">DELOAD</span>':''}
+          <span class="badge badge-phase">P${pi+1}</span>
+          ${doneCount===4?'<span class="badge badge-done">✓</span>':''}
+          <span class="chev">›</span>
+        </span>
+      </button>
+      <div class="week-body">${SKEYS.map(s=>{
+        const se = PHASES[pi].seances[SKEYS.indexOf(s)];
+        const d = !!state.done[sid(w,s)];
+        const cur = next && next.w===w && next.s===s;
+        return `<button class="sess-row ${d?'done':''} ${cur?'current':''}" onclick="openSession(${w},'${s}')">
+          <span class="dot">${d?'✓':s}</span>
+          <span><b>Séance ${s}</b> — ${se.title}</span>
+          <span class="go">›</span></button>`;
+      }).join("")}</div></div>`;
+  }
+  el.innerHTML = html;
+}
+function toggleWeek(w){ document.getElementById("wk"+w).classList.toggle("open"); }
+
+/* ---------- vidéos (click-to-load) ---------- */
+function vidHTML(key){
+  const v = VIDEOS[key];
+  return `<div class="vid" id="vid-${key}-${Math.random().toString(36).slice(2,7)}">
+    <button class="thumb" style="background-image:url('https://i.ytimg.com/vi/${v.id}/hqdefault.jpg')"
+      onclick="loadVid(this,'${v.id}')" aria-label="Lire la vidéo : ${v.t}">
+      <span class="play"></span><span class="vt">${v.t}</span>
+    </button></div>`;
+}
+function loadVid(btn, id){
+  btn.parentElement.innerHTML =
+    `<iframe src="https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy" title="Vidéo tutoriel"></iframe>`;
+}
+
+/* ---------- vue séance ---------- */
+let cur = null;
+function openCurrent(){
+  const next = firstPending();
+  if (next) openSession(next.w, next.s);
+  else { show('home'); }
+}
+function openSession(w, s){
+  cur = {w, s};
+  const pi = phaseIndex(w), ph = PHASES[pi], se = ph.seances[SKEYS.indexOf(s)];
+  const key = sid(w,s), done = !!state.done[key];
+  const warmDone = state.warm[key] || [];
+  const strDone  = state.str[key] || [];
+  const warmItems = [...WARMUP_BASE, se.act];
+
+  let html = `
+    <button class="btn-ghost btn" style="min-height:40px;width:auto;padding:0 16px;margin-bottom:14px" onclick="show('home')">← Retour</button>
+    <div class="card">
+      <div class="eyebrow">Semaine ${w} / ${TOTAL_WEEKS} · Phase ${pi+1} — ${ph.name}</div>
+      <h2>Séance ${s} — ${se.title}</h2>
+      <p class="meta">${se.place}</p>
+      ${isDeload(w)?'<p class="mt"><span class="badge badge-deload">DELOAD : fais moitié moins de séries cette semaine</span></p>':''}
+      ${done?`<div class="done-banner mt">✓ Séance validée — tu peux la refaire ou la consulter</div>`:''}
+    </div>
+
+    <div class="sec-title"><span class="n">1</span><h3>Échauffement · 10 min</h3></div>
+    ${warmItems.map((t,i)=>`
+      <button class="check ${warmDone.includes(i)?'on':''}" onclick="tick('warm',${i},this)">
+        <span class="box">✓</span><span>${t}</span></button>`).join("")}
+    ${vidHTML(se.vids[1] || "warmup")}
+
+    <div class="sec-title"><span class="n">2</span><h3>Vidéo technique du jour</h3></div>
+    ${vidHTML(se.vids[0])}
+
+    <div class="sec-title"><span class="n">3</span><h3>Exercices</h3></div>
+    <p class="small" style="margin-bottom:10px">Note ce que tu as réellement fait (ex. « 12 s / 10 s / 8 s » ou « 8-8-7-6 »). C'est sauvegardé automatiquement.</p>
+    ${se.exos.map((e,i)=>{
+      const lk = key+"e"+i, val = (state.logs[lk]||"").replace(/"/g,"&quot;");
+      return `<div class="exo">
+        <div class="name">${e.n}</div>
+        <div class="target">🎯 ${e.t}</div>
+        <input inputmode="text" placeholder="Réalisé : …" value="${val}" onchange="log('${lk}',this.value)">
+      </div>`;}).join("")}
+
+    <div class="sec-title"><span class="n">4</span><h3>Étirements · 5-8 min</h3></div>
+    ${STRETCH.map((t,i)=>`
+      <button class="check ${strDone.includes(i)?'on':''}" onclick="tick('str',${i},this)">
+        <span class="box">✓</span><span>${t}</span></button>`).join("")}
+
+    <div class="validate-zone">
+      <button class="btn ${done?'btn-ghost':'btn-ok'}" id="validateBtn" onclick="validate()">
+        ${done?'Séance déjà validée ✓ (appuyer pour dévalider)':'✓ Valider la séance'}</button>
+    </div>`;
+  document.getElementById("view-session").innerHTML = html;
+  show('session');
+  window.scrollTo({top:0});
+}
+function tick(kind, i, el){
+  const key = sid(cur.w, cur.s);
+  const arr = state[kind][key] || [];
+  const ix = arr.indexOf(i);
+  if (ix >= 0) arr.splice(ix,1); else arr.push(i);
+  state[kind][key] = arr; save();
+  el.classList.toggle("on");
+}
+function log(lk, v){ state.logs[lk] = v; save(); }
+function validate(){
+  const key = sid(cur.w, cur.s);
+  if (state.done[key]){
+    if (!confirm("Dévalider cette séance ?")) return;
+    delete state.done[key];
+  } else {
+    state.done[key] = Date.now();
+  }
+  save(); renderBar();
+  if (state.done[key]){
+    const next = firstPending();
+    renderHome();
+    if (next){
+      if (confirm("💪 Séance validée !\n\nProchaine séance : Semaine "+next.w+" · Séance "+next.s+".\nL'ouvrir maintenant ?")) { openSession(next.w,next.s); return; }
+    } else {
+      alert("🏆 PROGRAMME TERMINÉ ! 160 séances. Respect total.");
+    }
+    show('home');
+  } else {
+    renderHome(); openSession(cur.w, cur.s);
+  }
+}
+
+/* ---------- bibliothèque vidéos ---------- */
+function renderLib(){
+  const groups = [
+    ["Échauffement & bases", ["warmup","circuit"]],
+    ["Planche", ["planche1","planche2"]],
+    ["Drapeau / Human flag", ["flag1","flag2","flag3"]],
+    ["Handstand / Équilibre", ["hs1","hs2","hs3"]],
+    ["Tractions", ["pull1"]],
+  ];
+  document.getElementById("videoLib").innerHTML = groups.map(([g,keys]) =>
+    `<h3 class="disp" style="font-size:16px;margin:16px 0 8px;color:var(--accent)">${g}</h3>` +
+    keys.map(vidHTML).join("")).join("");
+}
+
+/* ---------- navigation ---------- */
+function show(v){
+  document.querySelectorAll(".view").forEach(e=>e.classList.remove("on"));
+  document.getElementById("view-"+v).classList.add("on");
+  document.querySelectorAll("nav button").forEach(b=>b.classList.remove("on"));
+  const nb = document.getElementById("nav-"+(v==="session"?"session":v));
+  if (nb) nb.classList.add("on");
+  if (v==="home") renderHome();
+  window.scrollTo({top:0});
+}
+
+document.getElementById("resetBtn").onclick = () => {
+  if (confirm("Tout effacer ? Ta progression et tes notes seront perdues définitivement.")){
+    state = { done:{}, logs:{}, warm:{}, str:{} };
+    store.clear(); save(); renderBar(); renderHome();
+  }
+};
+
+/* ---------- init ---------- */
+renderBar(); renderHome(); renderLib();
+</script>
+</body>
+</html>
