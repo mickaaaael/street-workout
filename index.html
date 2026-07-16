@@ -1011,37 +1011,43 @@ function soundEnd(){ beep(880,.15,0); beep(880,.15,.22); beep(1318,.6,.44);
   if (navigator.vibrate) navigator.vibrate([250,120,500]); }
 function soundTick(){ beep(660,.08,0); }
 
-const TDUR = {};          // { hold, rest } par minuteur
+const TDUR = {};          // { hold, rest, sets } par minuteur
 let TRUN = null;          // {key, phases, idx, int}
+const PREP_SECS = 5;      // temps de mise en place avant chaque tenue
 
-/* extrait la durée de tenue ET la durée de repos explicite ("… repos 90 s") d'un objectif */
+/* extrait la durée de tenue, la durée de repos explicite ("… repos 90 s") et le nombre
+   de séries ("4 × …") d'un objectif. "séries"/"tentatives" etc. ne doivent jamais être
+   pris pour une unité "s" — d'où le (?![lettre]) qui refuse "s" suivi d'une autre lettre. */
 function parseTarget(t){
-  const restM = t.match(/repos\s+(\d+)(?:\s*-\s*(\d+))?\s*(s|min)\b/i);
+  const UNIT = "(\\d+)(?:\\s*-\\s*(\\d+))?\\s*(s|min)(?![a-zà-ÿ])";
+  const restM = t.match(new RegExp("repos\\s+"+UNIT, "i"));
   let restSecs = null;
   if (restM){
     const v = Math.max(+restM[1], +(restM[2]||0));
     restSecs = /min/i.test(restM[3]) ? v*60 : v;
   }
   const before = restM ? t.slice(0, restM.index) : t;
-  const holdM = before.match(/(\d+)(?:\s*-\s*(\d+))?\s*(s|min)\b/);
+  const holdM = before.match(new RegExp(UNIT, "i"));
   let holdSecs = null;
   if (holdM){
     const v = Math.max(+holdM[1], +(holdM[2]||0));
     holdSecs = /min/i.test(holdM[3]) ? v*60 : v;
   }
-  return { holdSecs, restSecs };
+  const setsM = t.match(/^(\d+)\s*[×x]\s*(?:\d|max)/i);
+  const sets = (setsM && holdSecs) ? Math.max(1, +setsM[1]) : 1;
+  return { holdSecs, restSecs, sets };
 }
 function fmt(s){ return Math.floor(s/60)+":"+String(s%60).padStart(2,"0"); }
 function initialLabel(key){
   const d = TDUR[key];
-  if (d.hold && d.rest) return "⏱ tenue, puis repos auto — lancer ▶";
-  if (d.hold) return "⏱ chrono tenue — lancer ▶";
-  return "⏱ chrono repos — lancer ▶";
+  if (!d.hold) return "⏱ chrono repos — lancer ▶";
+  if (d.rest) return (d.sets>1 ? `⏱ ${d.sets} séries auto` : "⏱ prépa, tenue, repos auto") + " — lancer ▶";
+  return "⏱ prépa puis chrono tenue — lancer ▶";
 }
 function timerHTML(target, key){
-  const { holdSecs, restSecs } = parseTarget(target);
+  const { holdSecs, restSecs, sets } = parseTarget(target);
   if (!holdSecs && !restSecs) return "";
-  TDUR[key] = TDUR[key] || { hold: holdSecs, rest: restSecs };
+  TDUR[key] = TDUR[key] || { hold: holdSecs, rest: restSecs, sets };
   const d = TDUR[key];
   return `<div class="timer">
     <button class="t-adj" onclick="tAdj('${key}',-5)" aria-label="Moins 5 secondes">−5</button>
@@ -1064,8 +1070,8 @@ function tStop(){
   }
 }
 function tSet(key, secs){
-  TDUR[key] = TDUR[key] || { hold:null, rest:null };
-  TDUR[key].hold = secs; TDUR[key].rest = null;
+  TDUR[key] = TDUR[key] || { hold:null, rest:null, sets:1 };
+  TDUR[key].hold = secs; TDUR[key].rest = null; TDUR[key].sets = 1;
   if (TRUN && TRUN.key === key) tStop();
   const tt = document.getElementById("tt-"+key);
   if (tt) tt.textContent = fmt(secs);
@@ -1080,41 +1086,53 @@ function tAdj(key, d){
   const tt = document.getElementById("tt-"+key);
   if (tt) tt.textContent = fmt(cur.hold || cur.rest);
 }
+/* construit la séquence complète : (prépa 5 s + tenue [+ repos]) répété pour chaque série */
+function buildPhases(d){
+  if (!d.hold) return d.rest ? [{ kind:"rest", secs:d.rest, i:0, n:1 }] : [];
+  const n = d.sets || 1;
+  const phases = [];
+  for (let i=0; i<n; i++){
+    phases.push({ kind:"prep", secs:PREP_SECS, i, n });
+    phases.push({ kind:"hold", secs:d.hold, i, n });
+    if (d.rest && i < n-1) phases.push({ kind:"rest", secs:d.rest, i, n });
+  }
+  return phases;
+}
+function phaseLabel(phase){
+  const word = phase.kind==="prep" ? "préparation…" : phase.kind==="hold" ? "en cours" : "repos";
+  return phase.n>1 ? `Série ${phase.i+1}/${phase.n} · ${word}` : `${word} (appuyer pour arrêter)`;
+}
 function tToggle(key){
   if (TRUN && TRUN.key === key){ tStop(); return; }   // appuyer = arrêter
   tStop();
   // débloque l'audio sur iOS/Android (doit être déclenché par un geste)
   try{ AC = AC || new (window.AudioContext||window.webkitAudioContext)(); if (AC.state==="suspended") AC.resume(); }catch(e){}
-  const d = TDUR[key];
-  const phases = [];
-  if (d.hold) phases.push({ secs:d.hold, kind:"hold" });
-  if (d.rest) phases.push({ secs:d.rest, kind:"rest" });
+  const phases = buildPhases(TDUR[key]);
   if (!phases.length) return;
   runPhase(key, phases, 0);
 }
 function runPhase(key, phases, idx){
   const el = document.getElementById("tm-"+key), tt = document.getElementById("tt-"+key), ts = document.getElementById("ts-"+key);
   if (!el) return;
-  let r = phases[idx].secs;
+  const phase = phases[idx];
+  let r = phase.secs;
   el.classList.add("run"); el.classList.remove("fin");
   tt.textContent = fmt(r);
-  ts.textContent = idx > 0
-    ? "⏳ repos automatique en cours…"
-    : (phases[idx].kind === "rest" ? "repos en cours… (appuyer pour arrêter)" : "en cours… (appuyer pour arrêter)");
-  beep(idx===0 ? 990 : 770, .1, 0);
+  ts.textContent = phaseLabel(phase);
+  beep(phase.kind==="hold" ? 990 : phase.kind==="rest" ? 770 : 523, .1, 0);
   TRUN = { key, int: setInterval(()=>{
     r--;
     if (r > 0){
       tt.textContent = fmt(r);
-      if (r <= 3) soundTick();
+      if (phase.kind === "prep" || r <= 3) soundTick();
     } else {
       clearInterval(TRUN.int); TRUN = null;
       if (idx < phases.length - 1){
-        soundEnd();
-        tt.textContent = "0:00"; ts.textContent = "Tenue terminée — repos auto…";
-        setTimeout(()=>{ runPhase(key, phases, idx+1); }, 1200);
+        tt.textContent = "0:00";
+        setTimeout(()=>{ runPhase(key, phases, idx+1); }, phase.kind==="prep" ? 250 : 900);
       } else {
-        tt.textContent = "0:00"; ts.textContent = "Terminé ! ✓";
+        const n = phase.n;
+        tt.textContent = "0:00"; ts.textContent = n>1 ? `Terminé ! ✓ (${n} séries)` : "Terminé ! ✓";
         el.classList.remove("run"); el.classList.add("fin");
         soundEnd();
         setTimeout(()=>{ if (!TRUN || TRUN.key !== key){
