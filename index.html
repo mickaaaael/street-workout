@@ -187,6 +187,13 @@ nav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stro
   <!-- ================= VUE SÉANCE ================= -->
   <section class="view" id="view-session"></section>
 
+  <!-- ================= VUE SOUPLESSE QUOTIDIENNE ================= -->
+  <section class="view" id="view-flex">
+    <h2 class="disp" style="font-size:20px;margin:6px 0 4px">Souplesse du jour</h2>
+    <p class="small" style="margin-bottom:14px">À faire chaque jour, même les jours sans séance — 10-12 min. Gagner en souplesse (hanches, épaules, ischios) aide directement la planche, le drapeau et le handstand.</p>
+    <div id="flexCard"></div>
+  </section>
+
   <!-- ================= VUE VIDÉOS ================= -->
   <section class="view" id="view-videos">
     <h2 class="disp" style="font-size:20px;margin:6px 0 12px">Bibliothèque vidéos</h2>
@@ -202,6 +209,9 @@ nav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stro
   <button id="nav-session" onclick="openCurrent()">
     <svg viewBox="0 0 24 24"><path d="M6 5v14M18 5v14M2 9v6M22 9v6M6 12h12"/></svg>
     Séance</button>
+  <button id="nav-flex" onclick="show('flex')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="4.5" r="1.8"/><path d="M12 8v5l-4 7M12 13l4 7M8 11l-3 2M16 11l3 2"/></svg>
+    Souplesse</button>
   <button id="nav-videos" onclick="show('videos')">
     <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="M10 9l5 3-5 3z"/></svg>
     Vidéos</button>
@@ -238,6 +248,19 @@ const STRETCH = [
   "Obliques et flancs (spécial drapeau) : étirement latéral debout, 30 s par côté",
   "Ischio-jambiers : pike au sol 45 s — Hanches : fente basse 30 s par côté",
   "Respiration calme 1 min pour redescendre",
+];
+
+/* Routine de souplesse à faire TOUS LES JOURS (même sans séance) — indépendante du programme de 40 semaines */
+const FLEX_DAILY = [
+  { n:"Poignets : fléchisseurs / extenseurs + rotations (essentiel handstand & planche)", t:"2 min" },
+  { n:"Épaules en extension : bras tendus dans l'encadrement d'une porte, buste qui avance", t:"45 s / côté" },
+  { n:"Pike au sol : jambes tendues, buste vers les pieds (ischio-jambiers, utile L-sit / straddle)", t:"60 s" },
+  { n:"Fente basse, genou arrière au sol (fléchisseurs de hanche, ouverture pour le drapeau)", t:"45 s / côté" },
+  { n:"Pigeon pose : cheville avant croisée, buste vers l'avant (fessiers / piriforme)", t:"60 s / côté" },
+  { n:"Grenouille : genoux écartés, hanches vers le sol (adducteurs, spécial straddle planche/flag)", t:"90 s" },
+  { n:"Pont au sol (épaules, dos, poignets) — seulement si à l'aise, sinon reste en demi-pont", t:"3 × 15-20 s" },
+  { n:"Torsion thoracique allongé au sol, genoux d'un côté, regard de l'autre", t:"45 s / côté" },
+  { n:"Suspension passive à la barre, corps relâché (décompression épaules / dorsaux)", t:"45-60 s" },
 ];
 
 /* Chaque phase : nom, objectif, critères, 4 séances (titre, lieu, activation, vidéos, exos[{n,t}]) */
@@ -506,7 +529,7 @@ const store = (() => {
   };
 })();
 
-let state = { done:{}, logs:{}, warm:{}, str:{} };
+let state = { done:{}, logs:{}, warm:{}, str:{}, flex:{} };
 (function load(){
   try { const s = store.get("sw_state"); if (s) state = Object.assign(state, JSON.parse(s)); } catch(e){}
 })();
@@ -724,6 +747,56 @@ function renderLib(){
     keys.map(vidHTML).join("")).join("");
 }
 
+/* ---------- souplesse quotidienne (indépendante des 40 semaines) ---------- */
+function dateKey(d){
+  d = d || new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function todayFlexArr(){
+  state.flex = state.flex || {};
+  const k = dateKey();
+  state.flex[k] = state.flex[k] || [];
+  return state.flex[k];
+}
+function flexStreak(){
+  let n = 0, d = new Date();
+  while (true){
+    const arr = state.flex && state.flex[dateKey(d)];
+    if (arr && arr.length === FLEX_DAILY.length){ n++; d.setDate(d.getDate()-1); }
+    else break;
+  }
+  return n;
+}
+function toggleFlex(i, el){
+  const arr = todayFlexArr();
+  const ix = arr.indexOf(i);
+  if (ix >= 0) arr.splice(ix,1); else arr.push(i);
+  save();
+  el.classList.toggle("on");
+  document.getElementById("flexProgress").textContent = `${arr.length} / ${FLEX_DAILY.length} fait aujourd'hui`;
+  const streak = flexStreak();
+  document.getElementById("flexStreak").textContent = streak + (streak>1?" jours de suite 🔥":" jour");
+}
+function renderFlex(){
+  const done = todayFlexArr(), streak = flexStreak();
+  document.getElementById("flexCard").innerHTML = `
+    <div class="card">
+      <div class="eyebrow">Aujourd'hui</div>
+      <h2 id="flexProgress" style="font-size:20px">${done.length} / ${FLEX_DAILY.length} fait aujourd'hui</h2>
+      <p class="meta" id="flexStreak">${streak} ${streak>1?"jours de suite 🔥":"jour"}</p>
+    </div>
+    ${FLEX_DAILY.map((f,i)=>{
+      const on = done.includes(i);
+      return `<div class="exo">
+        <div class="name">${f.n}</div>
+        <div class="target">🎯 ${f.t}</div>
+        ${timerHTML(f.t, "flex"+i)}
+        <button class="check ${on?'on':''}" onclick="toggleFlex(${i},this)">
+          <span class="box">✓</span><span>Marquer comme fait</span></button>
+      </div>`;
+    }).join("")}`;
+}
+
 /* ---------- navigation ---------- */
 function show(v){
   document.querySelectorAll(".view").forEach(e=>e.classList.remove("on"));
@@ -732,12 +805,13 @@ function show(v){
   const nb = document.getElementById("nav-"+(v==="session"?"session":v));
   if (nb) nb.classList.add("on");
   if (v==="home") renderHome();
+  if (v==="flex") renderFlex();
   window.scrollTo({top:0});
 }
 
 document.getElementById("resetBtn").onclick = () => {
   if (confirm("Tout effacer ? Ta progression et tes notes seront perdues définitivement.")){
-    state = { done:{}, logs:{}, warm:{}, str:{} };
+    state = { done:{}, logs:{}, warm:{}, str:{}, flex:{} };
     store.clear(); save(); renderBar(); renderHome();
   }
 };
@@ -760,7 +834,7 @@ function importSaveFile(file){
     catch(err){ alert("Fichier illisible : ce n'est pas une sauvegarde JSON valide."); return; }
     if (!data || typeof data !== "object"){ alert("Fichier illisible : ce n'est pas une sauvegarde valide."); return; }
     if (!confirm("Importer cette sauvegarde ? Ta progression actuelle sur ce téléphone sera remplacée.")) return;
-    state = Object.assign({ done:{}, logs:{}, warm:{}, str:{} }, data);
+    state = Object.assign({ done:{}, logs:{}, warm:{}, str:{}, flex:{} }, data);
     save(); renderBar(); renderHome();
     alert("Sauvegarde importée ✓");
   };
@@ -1041,8 +1115,9 @@ function fmt(s){ return Math.floor(s/60)+":"+String(s%60).padStart(2,"0"); }
 function initialLabel(key){
   const d = TDUR[key];
   if (!d.hold) return "⏱ chrono repos — lancer ▶";
-  if (d.rest) return (d.sets>1 ? `⏱ ${d.sets} séries auto` : "⏱ prépa, tenue, repos auto") + " — lancer ▶";
-  return "⏱ prépa puis chrono tenue — lancer ▶";
+  const nTxt = d.sets>1 ? `${d.sets} séries` : null;
+  if (d.rest) return (nTxt ? `⏱ ${nTxt} auto` : "⏱ prépa, tenue, repos auto") + " — lancer ▶";
+  return (nTxt ? `⏱ ${nTxt} (prépa+tenue) auto` : "⏱ prépa puis chrono tenue") + " — lancer ▶";
 }
 function timerHTML(target, key){
   const { holdSecs, restSecs, sets } = parseTarget(target);
