@@ -152,6 +152,7 @@ nav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stro
 <header>
   <h1>STREET<span>WORKOUT</span></h1>
   <div class="sub">Planche · Drapeau · Handstand · Tractions — 10 mois</div>
+  <div class="sub" id="wakeStatus" style="margin-top:4px"></div>
 </header>
 
 <div class="wrap">
@@ -846,6 +847,28 @@ document.getElementById("importFile").onchange = e => {
   if (e.target.files[0]) importSaveFile(e.target.files[0]);
   e.target.value = "";
 };
+
+/* ---------- garder l'écran allumé pendant l'utilisation ---------- */
+let wakeLock = null;
+function setWakeStatus(text){ const el = document.getElementById("wakeStatus"); if (el) el.textContent = text; }
+async function keepAwake(){
+  if (!("wakeLock" in navigator)){
+    setWakeStatus("ℹ️ Écran auto non supporté ici — désactive la mise en veille dans les réglages du téléphone");
+    return;
+  }
+  if (wakeLock) return; // déjà actif
+  try {
+    wakeLock = await navigator.wakeLock.request("screen");
+    setWakeStatus("🔓 Écran maintenu allumé");
+    wakeLock.addEventListener("release", () => { wakeLock = null; });
+  } catch(e){
+    // ex. batterie faible ou permission refusée — on retentera au prochain clic
+    setWakeStatus("");
+  }
+}
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") keepAwake(); });
+document.addEventListener("click", keepAwake);
+keepAwake();
 
 /* ---------- init ---------- */
 renderBar(); renderHome(); renderLib();
