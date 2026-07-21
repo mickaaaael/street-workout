@@ -144,6 +144,19 @@ nav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stro
   font-size:13.5px;margin:10px 0}
 .link-danger{color:var(--danger);font-size:13px;text-decoration:underline;padding:10px}
 .center{text-align:center}
+
+/* ---------- mode focus plein écran ---------- */
+.focus-overlay{position:fixed;inset:0;z-index:300;background:var(--bg);display:none;flex-direction:column}
+.focus-overlay.on{display:flex}
+.focus-top{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top));border-bottom:1px solid var(--line);flex:none}
+.focus-top .fclose{width:36px;height:36px;flex:none;border-radius:10px;background:var(--card2);
+  border:1px solid var(--line);font-size:15px;display:flex;align-items:center;justify-content:center;color:var(--chalk)}
+.focus-body{flex:1;overflow-y:auto;padding:16px;max-width:640px;margin:0 auto;width:100%}
+.focus-body h2{font-size:21px;margin:2px 0 4px}
+.focus-nav{display:flex;gap:10px;padding:12px 16px;flex:none;
+  padding-bottom:calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:var(--bg)}
+
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -217,6 +230,19 @@ nav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stro
     <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="M10 9l5 3-5 3z"/></svg>
     Vidéos</button>
 </nav>
+
+<!-- ================= MODE FOCUS PLEIN ÉCRAN ================= -->
+<div class="focus-overlay" id="focusOverlay">
+  <div class="focus-top">
+    <span class="small" id="focusProgress"></span>
+    <button class="fclose" onclick="closeFocus()" aria-label="Fermer le mode focus">✕</button>
+  </div>
+  <div class="focus-body" id="focusBody"></div>
+  <div class="focus-nav">
+    <button class="btn btn-ghost" id="focusPrevBtn" onclick="focusPrev()" style="flex:0 0 auto;width:auto;padding:0 18px">←</button>
+    <button class="btn btn-accent" id="focusNextBtn" onclick="focusNext()">Suivant ▶</button>
+  </div>
+</div>
 
 <script>
 /* =====================================================================
@@ -633,6 +659,8 @@ function loadVid(btn, id){
 
 /* ---------- vue séance ---------- */
 let cur = null;
+let FOCUS = null;           // { steps, idx, w, s, completed:Set } — mode focus plein écran
+let FOCUS_WAIT_KEY = null;  // clé du minuteur qu'on attend pour révéler "Suivant"
 function openCurrent(){
   const next = firstPending();
   if (next) openSession(next.w, next.s);
@@ -701,6 +729,92 @@ function openSession(w, s){
   document.getElementById("view-session").innerHTML = html;
   show('session');
   window.scrollTo({top:0});
+  startFocus(w, s);
+}
+
+/* ---------- mode focus plein écran : un exercice à la fois, avance guidée ---------- */
+function buildFocusSteps(w, s){
+  const pi = phaseIndex(w), ph = PHASES[pi], se = ph.seances[SKEYS.indexOf(s)];
+  const steps = [{ type:"warmup" }];
+  se.exos.forEach((e,i) => steps.push({ type:"exo", e, i }));
+  steps.push({ type:"stretch" }, { type:"done" });
+  return steps;
+}
+async function startFocus(w, s){
+  FOCUS = { steps: buildFocusSteps(w,s), idx:0, w, s, completed:new Set() };
+  document.getElementById("focusOverlay").classList.add("on");
+  try { await document.documentElement.requestFullscreen(); } catch(e){ /* non supporté / refusé — l'overlay suffit */ }
+  renderFocusStep();
+}
+function closeFocus(){
+  FOCUS = null; FOCUS_WAIT_KEY = null;
+  document.getElementById("focusOverlay").classList.remove("on");
+  if (document.fullscreenElement){ try{ document.exitFullscreen(); }catch(e){} }
+}
+function focusPrev(){
+  if (!FOCUS || FOCUS.idx <= 0) return;
+  FOCUS.idx--; renderFocusStep();
+}
+function focusNext(){
+  if (!FOCUS) return;
+  const step = FOCUS.steps[FOCUS.idx];
+  if (step.type === "done"){ closeFocus(); validate(); return; }
+  if (FOCUS.idx < FOCUS.steps.length - 1){ FOCUS.idx++; renderFocusStep(); }
+  else closeFocus();
+}
+function revealFocusNext(){
+  FOCUS_WAIT_KEY = null;
+  if (FOCUS) FOCUS.completed.add(FOCUS.idx);
+  const btn = document.getElementById("focusNextBtn");
+  if (btn) btn.style.display = "";
+}
+function renderFocusStep(){
+  if (!FOCUS) return;
+  const { steps, idx, w, s } = FOCUS;
+  const step = steps[idx];
+  const pi = phaseIndex(w), ph = PHASES[pi], se = ph.seances[SKEYS.indexOf(s)];
+  const key = sid(w,s);
+  document.getElementById("focusProgress").textContent = `Étape ${idx+1} / ${steps.length}`;
+  document.getElementById("focusPrevBtn").style.display = idx>0 ? "" : "none";
+  const nextBtn = document.getElementById("focusNextBtn");
+  nextBtn.style.display = "";
+  nextBtn.textContent = step.type==="done" ? "✓ Valider la séance" : "Suivant ▶";
+  FOCUS_WAIT_KEY = null;
+
+  let html = "";
+  if (step.type === "warmup"){
+    const warmDone = state.warm[key] || [];
+    const warmItems = [...WARMUP_BASE, se.act];
+    html = `<div class="eyebrow">Échauffement · 10 min</div><h2 style="margin-bottom:10px">Avant de commencer</h2>` +
+      warmItems.map((t,i)=>`<button class="check ${warmDone.includes(i)?'on':''}" onclick="tick('warm',${i},this)">
+        <span class="box">✓</span><span>${t}</span></button>`).join("") +
+      vidHTML(se.vids[1] || "warmup");
+  } else if (step.type === "exo"){
+    const e = step.e, i = step.i;
+    const lk = key+"e"+i, val = (state.logs[lk]||"").replace(/"/g,"&quot;");
+    const hasHold = !!parseTarget(e.t).holdSecs;
+    const isDone = FOCUS.completed.has(idx);
+    html = `<div class="eyebrow">Exercice ${i+1} / ${se.exos.length}</div>
+      <div class="exo" style="margin-top:6px">
+        <div class="name" style="font-size:17px">${e.n}</div>
+        <div class="target" style="font-size:15px">🎯 ${e.t}</div>
+        ${picHTML(e.n)}
+        ${timerHTML(e.t, lk)}
+        <input inputmode="text" placeholder="Réalisé : …" value="${val}" onchange="log('${lk}',this.value)">
+        ${!hasHold ? `<button class="btn ${isDone?'btn-ghost':'btn-ok'} mt" onclick="revealFocusNext()">${isDone?'✓ Séries marquées terminées':'✓ Séries terminées'}</button>` : ""}
+      </div>`;
+    if (hasHold && !isDone){ nextBtn.style.display = "none"; FOCUS_WAIT_KEY = lk; }
+  } else if (step.type === "stretch"){
+    const strDone = state.str[key] || [];
+    html = `<div class="eyebrow">Étirements · 5-8 min</div><h2 style="margin-bottom:10px">Fin de séance</h2>` +
+      STRETCH.map((t,i)=>`<button class="check ${strDone.includes(i)?'on':''}" onclick="tick('str',${i},this)">
+        <span class="box">✓</span><span>${t}</span></button>`).join("");
+  } else if (step.type === "done"){
+    html = `<div class="eyebrow">Bravo 💪</div><h2>Séance terminée !</h2>
+      <p class="meta mt">Valide pour l'enregistrer et passer à la suivante.</p>`;
+  }
+  document.getElementById("focusBody").innerHTML = html;
+  document.getElementById("focusBody").scrollTop = 0;
 }
 function tick(kind, i, el){
   const key = sid(cur.w, cur.s);
@@ -1243,6 +1357,7 @@ function runPhase(key, phases, idx){
         tt.textContent = "0:00"; ts.textContent = n>1 ? `Terminé ! ✓ (${n} séries)` : "Terminé ! ✓";
         el.classList.remove("run"); el.classList.add("fin");
         soundEnd();
+        if (FOCUS_WAIT_KEY === key) revealFocusNext();
         setTimeout(()=>{ if (!TRUN || TRUN.key !== key){
           const tt2 = document.getElementById("tt-"+key), ts2 = document.getElementById("ts-"+key), el2 = document.getElementById("tm-"+key);
           const dd = TDUR[key];
