@@ -253,15 +253,15 @@ const STRETCH = [
 
 /* Routine de souplesse à faire TOUS LES JOURS (même sans séance) — indépendante du programme de 40 semaines */
 const FLEX_DAILY = [
-  { n:"Poignets : fléchisseurs / extenseurs + rotations (essentiel handstand & planche)", t:"2 min" },
-  { n:"Épaules en extension : bras tendus dans l'encadrement d'une porte, buste qui avance", t:"45 s / côté" },
-  { n:"Pike au sol : jambes tendues, buste vers les pieds (ischio-jambiers, utile L-sit / straddle)", t:"60 s" },
-  { n:"Fente basse, genou arrière au sol (fléchisseurs de hanche, ouverture pour le drapeau)", t:"45 s / côté" },
-  { n:"Pigeon pose : cheville avant croisée, buste vers l'avant (fessiers / piriforme)", t:"60 s / côté" },
-  { n:"Grenouille : genoux écartés, hanches vers le sol (adducteurs, spécial straddle planche/flag)", t:"90 s" },
-  { n:"Pont au sol (épaules, dos, poignets) — seulement si à l'aise, sinon reste en demi-pont", t:"3 × 15-20 s" },
-  { n:"Torsion thoracique allongé au sol, genoux d'un côté, regard de l'autre", t:"45 s / côté" },
-  { n:"Suspension passive à la barre, corps relâché (décompression épaules / dorsaux)", t:"45-60 s" },
+  { n:"Poignets : fléchisseurs / extenseurs + rotations (essentiel handstand & planche)", t:"2 min", pic:"wriststretch" },
+  { n:"Épaules en extension : bras tendus dans l'encadrement d'une porte, buste qui avance", t:"45 s / côté", pic:"doorstretch" },
+  { n:"Pike au sol : jambes tendues, buste vers les pieds (ischio-jambiers, utile L-sit / straddle)", t:"60 s", pic:"pikestretch" },
+  { n:"Fente basse, genou arrière au sol (fléchisseurs de hanche, ouverture pour le drapeau)", t:"45 s / côté", pic:"lungestretch" },
+  { n:"Pigeon pose : cheville avant croisée, buste vers l'avant (fessiers / piriforme)", t:"60 s / côté", pic:"pigeon" },
+  { n:"Grenouille : genoux écartés, hanches vers le sol (adducteurs, spécial straddle planche/flag)", t:"90 s", pic:"frogstretch" },
+  { n:"Pont au sol (épaules, dos, poignets) — seulement si à l'aise, sinon reste en demi-pont", t:"3 × 15-20 s", pic:"bridge" },
+  { n:"Torsion thoracique allongé au sol, genoux d'un côté, regard de l'autre", t:"45 s / côté", pic:"spinaltwist" },
+  { n:"Suspension passive à la barre, corps relâché (décompression épaules / dorsaux)", t:"45-60 s", pic:"hang" },
 ];
 
 /* Chaque phase : nom, objectif, critères, 4 séances (titre, lieu, activation, vidéos, exos[{n,t}]) */
@@ -791,6 +791,7 @@ function renderFlex(){
       return `<div class="exo">
         <div class="name">${f.n}</div>
         <div class="target">🎯 ${f.t}</div>
+        ${picHTML(f.n, f.pic)}
         ${timerHTML(f.t, "flex"+i)}
         <button class="check ${on?'on':''}" onclick="toggleFlex(${i},this)">
           <span class="box">✓</span><span>Marquer comme fait</span></button>
@@ -1023,6 +1024,15 @@ flagraise:{p:[POLE,FLOOR],f:[
 mobility:{p:[FLOOR],f:[
  {h:[60,25],l:[[60,31,63,51],[63,51,57,70],[63,51,69,70],[60,35,45,24]]},
  {h:[52,28],l:[[55,33,63,51],[63,51,57,70],[63,51,69,70],[55,36,42,30]]}]},
+/* ---- étirements de souplesse quotidienne ---- */
+wriststretch:{p:[FLOOR],f:[{h:[38,42],l:[[44,45,58,58],[44,45,64,62],[58,58,60,70],[60,70,72,70]]}]},
+doorstretch:{p:[FLOOR,[40,8,40,64]],f:[{h:[52,22],l:[[56,26,64,48],[64,48,58,70],[64,48,70,70],[56,26,42,18]]}]},
+pikestretch:{p:[FLOOR],f:[{h:[34,66],l:[[40,67,64,43],[64,43,86,68],[40,67,36,69],[40,67,46,63]]}]},
+lungestretch:{p:[FLOOR],f:[{h:[52,30],l:[[52,34,52,50],[52,50,46,68],[46,68,34,70],[52,50,66,58],[66,58,78,70],[52,38,62,46]]}]},
+pigeon:{p:[FLOOR],f:[{h:[46,54],l:[[58,60,46,54],[58,60,44,62],[44,62,38,68],[58,60,92,68]]}]},
+frogstretch:{p:[FLOOR],f:[{h:[50,50],l:[[54,52,54,64],[54,64,38,70],[54,64,70,70],[54,52,66,58],[66,58,75,62]]}]},
+bridge:{p:[FLOOR],f:[{h:[24,66],l:[[28,67,54,45],[54,45,78,66],[78,66,78,70],[28,67,18,70]]}]},
+spinaltwist:{p:[FLOOR],f:[{h:[86,48],l:[[82,50,55,50],[55,50,42,58],[42,58,48,66],[80,48,94,40],[80,50,94,58]]}]},
 };
 
 /* Choix du pictogramme selon le nom de l'exercice (règles évaluées dans l'ordre) */
@@ -1076,8 +1086,8 @@ function poseG(f, cls){
   (f.c||[]).forEach(C=>s+=`<circle cx="${C[0]}" cy="${C[1]}" r="${C[2]}"/>`);
   return s+"</g>";
 }
-function picHTML(name){
-  const key = picFor(name); if (!key || !PICS[key]) return "";
+function picHTML(name, forceKey){
+  const key = forceKey || picFor(name); if (!key || !PICS[key]) return "";
   const P = PICS[key];
   let props = "";
   (P.p||[]).forEach(L=>props+=`<line class="p" x1="${L[0]}" y1="${L[1]}" x2="${L[2]}" y2="${L[3]}"/>`);
