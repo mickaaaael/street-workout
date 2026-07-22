@@ -215,7 +215,7 @@ nav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stro
   <!-- ================= VUE SOUPLESSE QUOTIDIENNE ================= -->
   <section class="view" id="view-flex">
     <h2 class="disp" style="font-size:20px;margin:6px 0 4px">Souplesse du jour</h2>
-    <p class="small" style="margin-bottom:14px">À faire chaque jour, même les jours sans séance — 10-12 min. Gagner en souplesse (hanches, épaules, ischios) aide directement la planche, le drapeau et le handstand.</p>
+    <p class="small" style="margin-bottom:14px">À faire chaque jour, même les jours sans séance — 15-18 min. Renforcer les poignets et gagner en souplesse (hanches, épaules, ischios) aide directement la planche, le drapeau et le handstand.</p>
     <div id="flexCard"></div>
   </section>
 
@@ -271,6 +271,7 @@ const VIDEOS = {
   hs2:      {id:"5zhlDW1WUw8", t:"Routine handstand débutants — Eric Flag"},
   hs3:      {id:"hgiH3htfwLk", t:"Apprendre le handstand en toute sécurité (chuter)"},
   pull1:    {id:"0i17S-5el2k", t:"Entraînement aux tractions — Major Gérald"},
+  wrist1:   {id:"bRAPcuW6s2Y", t:"Renforcer les poignets : 3 exercices indispensables (Yoga Laboratorium)"},
 };
 
 const WARMUP_BASE = [
@@ -290,7 +291,9 @@ const STRETCH = [
 
 /* Routine de souplesse à faire TOUS LES JOURS (même sans séance) — indépendante du programme de 40 semaines */
 const FLEX_DAILY = [
-  { n:"Poignets : fléchisseurs / extenseurs + rotations (essentiel handstand & planche)", t:"2 min", pic:"wriststretch" },
+  { n:"Renforcement poignets avec haltère léger (0,5 kg ou bouteille d'eau) : avant-bras posé sur une table, la main libre freine la descente en flexion, extension, puis inclinaison (pouce vers le haut)", t:"2-3 séries de 30 reps", pic:"wristweight", vid:"wrist1" },
+  { n:"Stabilisation du poignet au bâton (un manche à balai) : coude collé au corps, fais tourner le bâton d'un côté à l'autre sans le laisser tomber ; puis recommence bras tendu à hauteur d'épaule", t:"jusqu'à l'échauffement", pic:"wriststick", vid:"wrist1" },
+  { n:"Retour progressif en charge : assis sur les talons, mains à plat au sol devant toi, décolle les paumes en gardant le bout des doigts au sol ; une fois à l'aise, passe en appui à quatre pattes en transférant petit à petit le poids sur les mains", t:"2-3 séries de 30 reps", pic:"wristload", vid:"wrist1" },
   { n:"Épaules en extension : bras tendus dans l'encadrement d'une porte, buste qui avance", t:"45 s / côté", pic:"doorstretch" },
   { n:"Pike au sol : jambes tendues, buste vers les pieds (ischio-jambiers, utile L-sit / straddle)", t:"60 s", pic:"pikestretch" },
   { n:"Fente basse, genou arrière au sol (fléchisseurs de hanche, ouverture pour le drapeau)", t:"45 s / côté", pic:"lungestretch" },
@@ -917,6 +920,7 @@ function renderFlex(){
         <div class="name">${f.n}</div>
         <div class="target">🎯 ${f.t}</div>
         ${picHTML(f.n, f.pic)}
+        ${f.vid ? vidHTML(f.vid) : ""}
         ${timerHTML(f.t, "flex"+i)}
         <button class="check ${on?'on':''}" onclick="toggleFlex(${i},this)">
           <span class="box">✓</span><span>Marquer comme fait</span></button>
@@ -1151,6 +1155,13 @@ mobility:{p:[FLOOR],f:[
  {h:[52,28],l:[[55,33,63,51],[63,51,57,70],[63,51,69,70],[55,36,42,30]]}]},
 /* ---- étirements de souplesse quotidienne ---- */
 wriststretch:{p:[FLOOR],f:[{h:[38,42],l:[[44,45,58,58],[44,45,64,62],[58,58,60,70],[60,70,72,70]]}]},
+wristweight:{p:[[26,54,72,54]],f:[
+ {h:[30,38],l:[[34,41,52,54],[52,54,68,60]],c:[[70,61,3]]},
+ {h:[30,38],l:[[34,41,52,54],[52,54,66,46]],c:[[68,45,3]]}]},
+wriststick:{p:[FLOOR],f:[
+ {h:[50,25],l:[[54,29,58,50],[58,50,52,70],[58,50,64,70],[54,32,34,26],[54,32,76,40],[34,26,76,40]]},
+ {h:[50,25],l:[[54,29,58,50],[58,50,52,70],[58,50,64,70],[54,32,34,40],[54,32,76,26],[34,40,76,26]]}]},
+wristload:{p:[FLOOR],f:[{h:[28,46],l:[[34,50,36,69],[34,50,58,53],[58,53,58,68],[58,68,72,68]]}]},
 doorstretch:{p:[FLOOR,[40,8,40,64]],f:[{h:[52,22],l:[[56,26,64,48],[64,48,58,70],[64,48,70,70],[56,26,42,18]]}]},
 pikestretch:{p:[FLOOR],f:[{h:[34,66],l:[[40,67,64,43],[64,43,86,68],[40,67,36,69],[40,67,46,63]]}]},
 lungestretch:{p:[FLOOR],f:[{h:[52,30],l:[[52,34,52,50],[52,50,46,68],[46,68,34,70],[52,50,66,58],[66,58,78,70],[52,38,62,46]]}]},
