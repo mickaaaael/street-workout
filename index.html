@@ -762,6 +762,8 @@ async function startFocus(w, s){
 }
 function closeFocus(){
   FOCUS = null; FOCUS_WAIT_KEY = null;
+  if (TRUN && TRUN.prefix === "focus-"){ clearInterval(TRUN.int); TRUN = null; }
+  if (PAUSED && PAUSED.prefix === "focus-") PAUSED = null;
   document.getElementById("focusOverlay").classList.remove("on");
   if (document.fullscreenElement){ try{ document.exitFullscreen(); }catch(e){} }
 }
@@ -784,6 +786,9 @@ function revealFocusNext(){
 }
 function renderFocusStep(){
   if (!FOCUS) return;
+  // on quitte l'étape précédente : son minuteur (en cours ou en pause) ne survit pas au changement d'écran
+  if (TRUN) { clearInterval(TRUN.int); TRUN = null; }
+  if (PAUSED) { PAUSED = null; }
   const { steps, idx, w, s } = FOCUS;
   const step = steps[idx];
   const pi = phaseIndex(w), ph = PHASES[pi], se = ph.seances[SKEYS.indexOf(s)];
@@ -813,7 +818,7 @@ function renderFocusStep(){
         <div class="name" style="font-size:17px">${e.n}</div>
         <div class="target" style="font-size:15px">🎯 ${e.t}</div>
         ${picHTML(e.n)}
-        ${timerHTML(e.t, lk)}
+        ${timerHTML(e.t, lk, "focus-")}
         <input inputmode="text" placeholder="Réalisé : …" value="${val}" onchange="log('${lk}',this.value)">
         ${!hasHold ? `<button class="btn ${isDone?'btn-ghost':'btn-ok'} mt" onclick="revealFocusNext()">${isDone?'✓ Séries marquées terminées':'✓ Séries terminées'}</button>` : ""}
       </div>`;
@@ -1255,8 +1260,15 @@ function soundEnd(){ beep(880,.15,0); beep(880,.15,.22); beep(1318,.6,.44);
 function soundTick(){ beep(660,.08,0); }
 
 const TDUR = {};          // { hold, rest, sets } par minuteur
-let TRUN = null;          // {key, phases, idx, int}
+let TRUN = null;          // {key, prefix, phases, idx, remaining, int} — minuteur en cours
+let PAUSED = null;        // {key, prefix, phases, idx, remaining} — minuteur en pause
 const PREP_SECS = 5;      // temps de mise en place avant chaque tenue
+/* même exercice affiché à deux endroits en même temps (vue séance + mode focus) => IDs en double.
+   Un préfixe distingue les deux copies pour que getElementById cible la bonne. */
+function domIds(key, prefix){
+  prefix = prefix || "";
+  return { tm:"tm-"+prefix+key, tt:"tt-"+prefix+key, ts:"ts-"+prefix+key };
+}
 
 /* extrait la durée de tenue, la durée de repos explicite ("… repos 90 s") et le nombre
    de séries ("4 × …") d'un objectif. "séries"/"tentatives" etc. ne doivent jamais être
@@ -1288,46 +1300,51 @@ function initialLabel(key){
   if (d.rest) return (nTxt ? `⏱ ${nTxt} auto` : "⏱ prépa, tenue, repos auto") + " — lancer ▶";
   return (nTxt ? `⏱ ${nTxt} (prépa+tenue) auto` : "⏱ prépa puis chrono tenue") + " — lancer ▶";
 }
-function timerHTML(target, key){
+function timerHTML(target, key, prefix){
   const { holdSecs, restSecs, sets } = parseTarget(target);
   if (!holdSecs && !restSecs) return "";
   TDUR[key] = TDUR[key] || { hold: holdSecs, rest: restSecs, sets };
   const d = TDUR[key];
+  const ids = domIds(key, prefix);
   return `<div class="timer">
     <button class="t-adj" onclick="tAdj('${key}',-5)" aria-label="Moins 5 secondes">−5</button>
-    <button class="t-main" id="tm-${key}" onclick="tToggle('${key}')">
-      <span class="tt" id="tt-${key}">${fmt(d.hold || d.rest)}</span><small id="ts-${key}">${initialLabel(key)}</small>
+    <button class="t-main" id="${ids.tm}" onclick="tToggle('${key}','${prefix||""}')">
+      <span class="tt" id="${ids.tt}">${fmt(d.hold || d.rest)}</span><small id="${ids.ts}">${initialLabel(key)}</small>
     </button>
     <button class="t-adj" onclick="tAdj('${key}',5)" aria-label="Plus 5 secondes">+5</button>
   </div>`;
 }
+function resetDisplay(key, prefix){
+  const ids = domIds(key, prefix);
+  const el = document.getElementById(ids.tm);
+  if (!el) return;
+  el.classList.remove("run","fin");
+  const tt = document.getElementById(ids.tt), ts = document.getElementById(ids.ts);
+  const d = TDUR[key];
+  if (tt) tt.textContent = fmt(d.hold || d.rest);
+  if (ts) ts.textContent = initialLabel(key);
+}
 function tStop(){
-  if (TRUN){ clearInterval(TRUN.int);
-    const el = document.getElementById("tm-"+TRUN.key);
-    if (el){ el.classList.remove("run","fin");
-      const tt = document.getElementById("tt-"+TRUN.key), ts = document.getElementById("ts-"+TRUN.key);
-      const d = TDUR[TRUN.key];
-      if (tt) tt.textContent = fmt(d.hold || d.rest);
-      if (ts) ts.textContent = initialLabel(TRUN.key);
-    }
-    TRUN = null;
-  }
+  if (PAUSED){ resetDisplay(PAUSED.key, PAUSED.prefix); PAUSED = null; }
+  if (TRUN){ clearInterval(TRUN.int); resetDisplay(TRUN.key, TRUN.prefix); TRUN = null; }
 }
 function tSet(key, secs){
   TDUR[key] = TDUR[key] || { hold:null, rest:null, sets:1 };
   TDUR[key].hold = secs; TDUR[key].rest = null; TDUR[key].sets = 1;
-  if (TRUN && TRUN.key === key) tStop();
-  const tt = document.getElementById("tt-"+key);
+  if ((TRUN && TRUN.key === key) || (PAUSED && PAUSED.key === key)) tStop();
+  const ids = domIds(key);
+  const tt = document.getElementById(ids.tt);
   if (tt) tt.textContent = fmt(secs);
-  const ts = document.getElementById("ts-"+key);
+  const ts = document.getElementById(ids.ts);
   if (ts) ts.textContent = initialLabel(key);
 }
 function tAdj(key, d){
   const cur = TDUR[key];
-  if (TRUN && TRUN.key === key) tStop();
+  if ((TRUN && TRUN.key === key) || (PAUSED && PAUSED.key === key)) tStop();
   if (cur.hold != null) cur.hold = Math.max(5, cur.hold + d);
   else cur.rest = Math.max(5, cur.rest + d);
-  const tt = document.getElementById("tt-"+key);
+  const ids = domIds(key);
+  const tt = document.getElementById(ids.tt);
   if (tt) tt.textContent = fmt(cur.hold || cur.rest);
 }
 /* construit la séquence complète : (prépa 5 s + tenue [+ repos]) répété pour chaque série */
@@ -1344,28 +1361,51 @@ function buildPhases(d){
 }
 function phaseLabel(phase){
   const word = phase.kind==="prep" ? "préparation…" : phase.kind==="hold" ? "en cours" : "repos";
-  return phase.n>1 ? `Série ${phase.i+1}/${phase.n} · ${word}` : `${word} (appuyer pour arrêter)`;
+  return phase.n>1 ? `Série ${phase.i+1}/${phase.n} · ${word}` : `${word} (appuyer pour pause)`;
 }
-function tToggle(key){
-  if (TRUN && TRUN.key === key){ tStop(); return; }   // appuyer = arrêter
+function tToggle(key, prefix){
+  prefix = prefix || "";
+  if (TRUN && TRUN.key === key){ pauseTimer(); return; }         // en cours -> pause
+  if (PAUSED && PAUSED.key === key){ resumeTimer(); return; }    // en pause -> reprendre
+  if (PAUSED) { resetDisplay(PAUSED.key, PAUSED.prefix); PAUSED = null; } // on abandonne l'ancien
   tStop();
   // débloque l'audio sur iOS/Android (doit être déclenché par un geste)
   try{ AC = AC || new (window.AudioContext||window.webkitAudioContext)(); if (AC.state==="suspended") AC.resume(); }catch(e){}
   const phases = buildPhases(TDUR[key]);
   if (!phases.length) return;
-  runPhase(key, phases, 0);
+  runPhase(key, prefix, phases, 0);
 }
-function runPhase(key, phases, idx){
-  const el = document.getElementById("tm-"+key), tt = document.getElementById("tt-"+key), ts = document.getElementById("ts-"+key);
+function pauseTimer(){
+  if (!TRUN) return;
+  clearInterval(TRUN.int);
+  PAUSED = { key:TRUN.key, prefix:TRUN.prefix, phases:TRUN.phases, idx:TRUN.idx, remaining:TRUN.remaining };
+  const ids = domIds(PAUSED.key, PAUSED.prefix);
+  const el = document.getElementById(ids.tm), ts = document.getElementById(ids.ts);
+  if (el) el.classList.remove("run");
+  if (ts) ts.textContent = "⏸ En pause — reprendre ▶";
+  TRUN = null;
+}
+function resumeTimer(){
+  if (!PAUSED) return;
+  const { key, prefix, phases, idx, remaining } = PAUSED;
+  PAUSED = null;
+  try{ AC = AC || new (window.AudioContext||window.webkitAudioContext)(); if (AC.state==="suspended") AC.resume(); }catch(e){}
+  runPhase(key, prefix, phases, idx, remaining);
+}
+function runPhase(key, prefix, phases, idx, startAt){
+  const ids = domIds(key, prefix);
+  const el = document.getElementById(ids.tm), tt = document.getElementById(ids.tt), ts = document.getElementById(ids.ts);
   if (!el) return;
   const phase = phases[idx];
-  let r = phase.secs;
+  const resuming = startAt != null;
+  let r = resuming ? startAt : phase.secs;
   el.classList.add("run"); el.classList.remove("fin");
   tt.textContent = fmt(r);
   ts.textContent = phaseLabel(phase);
-  beep(phase.kind==="hold" ? 990 : phase.kind==="rest" ? 770 : 523, .1, 0);
-  TRUN = { key, int: setInterval(()=>{
+  if (!resuming) beep(phase.kind==="hold" ? 990 : phase.kind==="rest" ? 770 : 523, .1, 0);
+  TRUN = { key, prefix, phases, idx, remaining:r, int: setInterval(()=>{
     r--;
+    TRUN.remaining = r;
     if (r > 0){
       tt.textContent = fmt(r);
       if (phase.kind === "prep" || r <= 3) soundTick();
@@ -1373,18 +1413,14 @@ function runPhase(key, phases, idx){
       clearInterval(TRUN.int); TRUN = null;
       if (idx < phases.length - 1){
         tt.textContent = "0:00";
-        setTimeout(()=>{ runPhase(key, phases, idx+1); }, phase.kind==="prep" ? 250 : 900);
+        setTimeout(()=>{ runPhase(key, prefix, phases, idx+1); }, phase.kind==="prep" ? 250 : 900);
       } else {
         const n = phase.n;
         tt.textContent = "0:00"; ts.textContent = n>1 ? `Terminé ! ✓ (${n} séries)` : "Terminé ! ✓";
         el.classList.remove("run"); el.classList.add("fin");
         soundEnd();
         if (FOCUS_WAIT_KEY === key) revealFocusNext();
-        setTimeout(()=>{ if (!TRUN || TRUN.key !== key){
-          const tt2 = document.getElementById("tt-"+key), ts2 = document.getElementById("ts-"+key), el2 = document.getElementById("tm-"+key);
-          const dd = TDUR[key];
-          if (tt2){ tt2.textContent = fmt(dd.hold || dd.rest); ts2.textContent = initialLabel(key); el2.classList.remove("fin"); }
-        }}, 4000);
+        setTimeout(()=>{ if (!TRUN || TRUN.key !== key){ resetDisplay(key, prefix); el.classList.remove("fin"); } }, 4000);
       }
     }
   }, 1000) };
