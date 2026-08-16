@@ -163,6 +163,9 @@ nav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stro
   padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top));border-bottom:1px solid var(--line);flex:none}
 .focus-top .fclose{width:36px;height:36px;flex:none;border-radius:10px;background:var(--card2);
   border:1px solid var(--line);font-size:15px;display:flex;align-items:center;justify-content:center;color:var(--chalk)}
+.volBtn{width:38px;height:38px;flex:none;border-radius:10px;background:var(--card2);
+  border:1px solid var(--line);font-size:16px;display:flex;align-items:center;justify-content:center;color:var(--chalk)}
+.volBtn:active{transform:scale(.94)}
 .focus-body{flex:1;overflow-y:auto;padding:16px;max-width:640px;margin:0 auto;width:100%}
 .focus-body h2{font-size:21px;margin:2px 0 4px}
 .focus-nav{display:flex;gap:10px;padding:12px 16px;flex:none;
@@ -174,9 +177,14 @@ nav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stro
 <body>
 
 <header>
-  <h1>STREET<span>WORKOUT</span></h1>
-  <div class="sub">Planche · Drapeau · Handstand · Tractions — 10 mois</div>
-  <div class="sub" id="wakeStatus" style="margin-top:4px"></div>
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+    <div>
+      <h1>STREET<span>WORKOUT</span></h1>
+      <div class="sub">Planche · Drapeau · Handstand · Tractions — 10 mois</div>
+      <div class="sub" id="wakeStatus" style="margin-top:4px"></div>
+    </div>
+    <button class="volBtn" onclick="cycleVolume()" aria-label="Régler le volume des bips">🔊</button>
+  </div>
 </header>
 
 <div class="wrap">
@@ -246,7 +254,10 @@ nav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stro
 <div class="focus-overlay" id="focusOverlay">
   <div class="focus-top">
     <span class="small" id="focusProgress"></span>
-    <button class="fclose" onclick="closeFocus()" aria-label="Fermer le mode focus">✕</button>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="volBtn" onclick="cycleVolume()" aria-label="Régler le volume des bips">🔊</button>
+      <button class="fclose" onclick="closeFocus()" aria-label="Fermer le mode focus">✕</button>
+    </div>
   </div>
   <div class="focus-body" id="focusBody"></div>
   <div class="focus-nav">
@@ -570,7 +581,7 @@ const store = (() => {
   };
 })();
 
-let state = { done:{}, logs:{}, warm:{}, str:{}, flex:{} };
+let state = { done:{}, logs:{}, warm:{}, str:{}, flex:{}, setn:{} };
 (function load(){
   try { const s = store.get("sw_state"); if (s) state = Object.assign(state, JSON.parse(s)); } catch(e){}
 })();
@@ -947,7 +958,7 @@ function show(v){
 
 document.getElementById("resetBtn").onclick = () => {
   if (confirm("Tout effacer ? Ta progression et tes notes seront perdues définitivement.")){
-    state = { done:{}, logs:{}, warm:{}, str:{}, flex:{} };
+    state = { done:{}, logs:{}, warm:{}, str:{}, flex:{}, setn:{} };
     store.clear(); save(); renderBar(); renderHome();
   }
 };
@@ -970,7 +981,7 @@ function importSaveFile(file){
     catch(err){ alert("Fichier illisible : ce n'est pas une sauvegarde JSON valide."); return; }
     if (!data || typeof data !== "object"){ alert("Fichier illisible : ce n'est pas une sauvegarde valide."); return; }
     if (!confirm("Importer cette sauvegarde ? Ta progression actuelle sur ce téléphone sera remplacée.")) return;
-    state = Object.assign({ done:{}, logs:{}, warm:{}, str:{}, flex:{} }, data);
+    state = Object.assign({ done:{}, logs:{}, warm:{}, str:{}, flex:{}, setn:{} }, data);
     save(); renderBar(); renderHome();
     alert("Sauvegarde importée ✓");
   };
@@ -1242,22 +1253,52 @@ function picHTML(name, forceKey){
    MINUTEURS — compte à rebours avec bip de fin (aucun fichier audio requis)
 ===================================================================== */
 let AC = null;
+
+/* ---------- volume des bips (réglable, mémorisé) ---------- */
+const VOL_LEVELS = [0, 0.35, 0.7, 1];
+const VOL_ICONS  = ["🔇","🔉","🔊","📢"];
+const VOL_LABELS = ["Muet","Faible","Normal","Fort"];
+let VOLUME = (() => {
+  const v = parseFloat(store.get("sw_vol"));
+  return VOL_LEVELS.includes(v) ? v : 1;   // "Fort" par défaut
+})();
+function volIndex(){ const i = VOL_LEVELS.indexOf(VOLUME); return i>=0 ? i : VOL_LEVELS.length-1; }
+function updateVolButtons(){
+  const i = volIndex();
+  document.querySelectorAll(".volBtn").forEach(b=>{
+    b.textContent = VOL_ICONS[i];
+    b.setAttribute("aria-label", "Volume des bips : "+VOL_LABELS[i]+" — appuyer pour changer");
+  });
+}
+function cycleVolume(){
+  const i = (volIndex() + 1) % VOL_LEVELS.length;
+  VOLUME = VOL_LEVELS[i];
+  store.set("sw_vol", String(VOLUME));
+  updateVolButtons();
+  try{ AC = AC || new (window.AudioContext||window.webkitAudioContext)(); if (AC.state==="suspended") AC.resume(); }catch(e){}
+  if (VOLUME > 0) beep(880,.1,0);   // aperçu immédiat du niveau choisi
+  else if (navigator.vibrate) navigator.vibrate(30);
+}
+
+/* ondes carrées (riches en harmoniques) + gain réglable : nettement plus audible
+   par-dessus de la musique au casque qu'un sinus discret. */
 function beep(freq, dur, delay){
+  if (VOLUME <= 0) return;
   try{
     AC = AC || new (window.AudioContext||window.webkitAudioContext)();
     const o = AC.createOscillator(), g = AC.createGain();
-    o.type = "sine"; o.frequency.value = freq;
+    o.type = "square"; o.frequency.value = freq;
     o.connect(g); g.connect(AC.destination);
     const t = AC.currentTime + (delay||0);
     g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(0.5, t+0.015);
+    g.gain.exponentialRampToValueAtTime(VOLUME, t+0.015);
     g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
     o.start(t); o.stop(t+dur+0.05);
   }catch(e){}
 }
-function soundEnd(){ beep(880,.15,0); beep(880,.15,.22); beep(1318,.6,.44);
+function soundEnd(){ beep(880,.18,0); beep(880,.18,.24); beep(1318,.7,.48);
   if (navigator.vibrate) navigator.vibrate([250,120,500]); }
-function soundTick(){ beep(660,.08,0); }
+function soundTick(){ beep(660,.1,0); if (navigator.vibrate) navigator.vibrate(35); }
 
 const TDUR = {};          // { hold, rest, sets } par minuteur
 let TRUN = null;          // {key, prefix, phases, idx, remaining, int} — minuteur en cours
@@ -1289,13 +1330,29 @@ function parseTarget(t){
     holdSecs = /min/i.test(holdM[3]) ? v*60 : v;
   }
   const setsM = t.match(/^(\d+)\s*[×x]\s*(?:\d|max)/i);
-  const sets = (setsM && holdSecs) ? Math.max(1, +setsM[1]) : 1;
+  const sets = setsM ? Math.max(1, +setsM[1]) : 1;
   return { holdSecs, restSecs, sets };
 }
 function fmt(s){ return Math.floor(s/60)+":"+String(s%60).padStart(2,"0"); }
+/* suivi des séries pour les exercices en répétitions (pas de tenue chronométrée) :
+   chaque lancement du chrono repos = une série qui vient d'être faite. */
+function setsDoneCount(key){ return (state.setn && state.setn[key]) || 0; }
+function markSet(key, total){
+  state.setn = state.setn || {};
+  state.setn[key] = Math.min((state.setn[key]||0) + 1, total);
+  save();
+  return state.setn[key];
+}
 function initialLabel(key){
   const d = TDUR[key];
-  if (!d.hold) return "⏱ chrono repos — lancer ▶";
+  if (!d.hold){
+    if (d.rest && d.sets > 1){
+      const done = setsDoneCount(key);
+      if (done >= d.sets) return `✓ ${d.sets}/${d.sets} séries faites — relancer ▶`;
+      return done > 0 ? `⏱ Série ${done+1}/${d.sets} — lancer le repos ▶` : `⏱ ${d.sets} séries, repos entre chaque — lancer ▶`;
+    }
+    return "⏱ chrono repos — lancer ▶";
+  }
   const nTxt = d.sets>1 ? `${d.sets} séries` : null;
   if (d.rest) return (nTxt ? `⏱ ${nTxt} auto` : "⏱ prépa, tenue, repos auto") + " — lancer ▶";
   return (nTxt ? `⏱ ${nTxt} (prépa+tenue) auto` : "⏱ prépa puis chrono tenue") + " — lancer ▶";
@@ -1307,11 +1364,11 @@ function timerHTML(target, key, prefix){
   const d = TDUR[key];
   const ids = domIds(key, prefix);
   return `<div class="timer">
-    <button class="t-adj" onclick="tAdj('${key}',-5)" aria-label="Moins 5 secondes">−5</button>
+    <button class="t-adj" onclick="tAdj('${key}','${prefix||""}',-5)" aria-label="Moins 5 secondes">−5</button>
     <button class="t-main" id="${ids.tm}" onclick="tToggle('${key}','${prefix||""}')">
       <span class="tt" id="${ids.tt}">${fmt(d.hold || d.rest)}</span><small id="${ids.ts}">${initialLabel(key)}</small>
     </button>
-    <button class="t-adj" onclick="tAdj('${key}',5)" aria-label="Plus 5 secondes">+5</button>
+    <button class="t-adj" onclick="tAdj('${key}','${prefix||""}',5)" aria-label="Plus 5 secondes">+5</button>
   </div>`;
 }
 function resetDisplay(key, prefix){
@@ -1338,12 +1395,12 @@ function tSet(key, secs){
   const ts = document.getElementById(ids.ts);
   if (ts) ts.textContent = initialLabel(key);
 }
-function tAdj(key, d){
+function tAdj(key, prefix, d){
   const cur = TDUR[key];
   if ((TRUN && TRUN.key === key) || (PAUSED && PAUSED.key === key)) tStop();
   if (cur.hold != null) cur.hold = Math.max(5, cur.hold + d);
   else cur.rest = Math.max(5, cur.rest + d);
-  const ids = domIds(key);
+  const ids = domIds(key, prefix);
   const tt = document.getElementById(ids.tt);
   if (tt) tt.textContent = fmt(cur.hold || cur.rest);
 }
@@ -1371,7 +1428,14 @@ function tToggle(key, prefix){
   tStop();
   // débloque l'audio sur iOS/Android (doit être déclenché par un geste)
   try{ AC = AC || new (window.AudioContext||window.webkitAudioContext)(); if (AC.state==="suspended") AC.resume(); }catch(e){}
-  const phases = buildPhases(TDUR[key]);
+  const d = TDUR[key];
+  if (!d.hold && d.rest && d.sets > 1){
+    // exercice en répétitions, plusieurs séries : ce clic = la série qu'on vient de faire, avant le repos
+    const done = markSet(key, d.sets);
+    runPhase(key, prefix, [{ kind:"rest", secs:d.rest, i:done-1, n:d.sets }], 0);
+    return;
+  }
+  const phases = buildPhases(d);
   if (!phases.length) return;
   runPhase(key, prefix, phases, 0);
 }
@@ -1411,20 +1475,32 @@ function runPhase(key, prefix, phases, idx, startAt){
       if (phase.kind === "prep" || r <= 3) soundTick();
     } else {
       clearInterval(TRUN.int); TRUN = null;
-      if (idx < phases.length - 1){
+      const isLastArrayPhase = idx === phases.length - 1;
+      const isLastSet = !phase.n || (phase.i + 1 >= phase.n);
+      if (!isLastArrayPhase){
+        // enchaînement auto programmé à l'avance (tenue + repos d'une même série)
         tt.textContent = "0:00";
         setTimeout(()=>{ runPhase(key, prefix, phases, idx+1); }, phase.kind==="prep" ? 250 : 900);
-      } else {
+      } else if (isLastSet){
+        // fin réelle de l'exercice (toutes les séries faites)
         const n = phase.n;
         tt.textContent = "0:00"; ts.textContent = n>1 ? `Terminé ! ✓ (${n} séries)` : "Terminé ! ✓";
         el.classList.remove("run"); el.classList.add("fin");
         soundEnd();
         if (FOCUS_WAIT_KEY === key) revealFocusNext();
         setTimeout(()=>{ if (!TRUN || TRUN.key !== key){ resetDisplay(key, prefix); el.classList.remove("fin"); } }, 4000);
+      } else {
+        // repos d'une série terminé (exercice en répétitions), mais il reste des séries à faire
+        tt.textContent = "0:00"; ts.textContent = `Série ${phase.i+1}/${phase.n} faite ✓ — repos fini`;
+        el.classList.remove("run"); el.classList.add("fin");
+        soundEnd();
+        setTimeout(()=>{ if (!TRUN || TRUN.key !== key){ resetDisplay(key, prefix); el.classList.remove("fin"); } }, 2500);
       }
     }
   }, 1000) };
 }
+
+updateVolButtons();
 </script>
 
 </body>
