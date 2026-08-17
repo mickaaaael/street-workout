@@ -861,6 +861,7 @@ function buildAbdoSteps(){
 }
 async function startAbdoFocus(startIdx){
   FOCUS = { kind:"abdo", steps: buildAbdoSteps(), idx: startIdx||0, completed:new Set() };
+  playMusic(); // musique d'entraînement auto au lancement du circuit
   await enterFocusOverlay();
   renderFocusStep();
 }
@@ -1818,14 +1819,13 @@ function loadYTApi(cb){
     document.head.appendChild(tag);
   }
 }
-function toggleMusic(){
+function playMusic(){
   const box = document.getElementById("musicBox");
+  box.style.display = "block";
   if (ytPlayer && typeof ytPlayer.getPlayerState === "function"){
-    if (ytPlayer.getPlayerState() === 1){ ytPlayer.pauseVideo(); box.style.display = "none"; }
-    else { box.style.display = "block"; ytPlayer.playVideo(); }
+    if (ytPlayer.getPlayerState() !== 1) ytPlayer.playVideo();
     return;
   }
-  box.style.display = "block";
   loadYTApi(() => {
     ytPlayer = new YT.Player("ytMusicPlayer", {
       height: "90", width: "160",
@@ -1833,6 +1833,10 @@ function toggleMusic(){
       events: { onReady: (ev) => ev.target.playVideo() }
     });
   });
+}
+function toggleMusic(){
+  if (ytPlayer && typeof ytPlayer.getPlayerState === "function" && ytPlayer.getPlayerState() === 1) stopMusic();
+  else playMusic();
 }
 function stopMusic(){
   if (ytPlayer && typeof ytPlayer.pauseVideo === "function") ytPlayer.pauseVideo();
