@@ -936,7 +936,11 @@ function renderFocusStep(){
   if (PAUSED) { PAUSED = null; }
   const { steps, idx } = FOCUS;
   const step = steps[idx];
-  document.getElementById("focusProgress").textContent = `Étape ${idx+1} / ${steps.length}`;
+  const progEl = document.getElementById("focusProgress");
+  if (step.type === "abdoExo") progEl.textContent = `Exercice ${step.i+1} / ${ABDO_EXOS.length}`;
+  else if (step.type === "flexExo") progEl.textContent = `Exercice ${step.i+1} / ${FLEX_DAILY.length}`;
+  else if (step.type === "abdoDone" || step.type === "flexDone") progEl.textContent = "Terminé";
+  else progEl.textContent = `Étape ${idx+1} / ${steps.length}`;
   document.getElementById("focusPrevBtn").style.display = idx>0 ? "" : "none";
   const nextBtn = document.getElementById("focusNextBtn");
   nextBtn.style.display = "";
@@ -946,16 +950,15 @@ function renderFocusStep(){
   if (FOCUS.kind === "abdo"){
     if (step.type === "abdoExo"){
       const e = step.e, i = step.i, key = "abdo"+i;
-      nextBtn.textContent = "Suivant ▶";
       html = `<div class="eyebrow">Exercice ${i+1} / ${ABDO_EXOS.length}</div>
         <div class="exo" style="margin-top:6px">
           <div class="name" style="font-size:17px">${e.n}</div>
           <div class="target" style="font-size:14.5px">${e.d}</div>
           <img src="${e.img}" alt="${e.n}" loading="lazy" style="width:100%;border-radius:10px;margin:10px 0;display:block">
-          ${timerHTML("45 s · repos 10 s", key, "focus-")}
+          ${timerHTML("45 s", key, "focus-")}
         </div>`;
+      // l'enchaînement est 100% automatique (voir runPhase) : pas besoin de "Suivant"
       nextBtn.style.display = "none";
-      FOCUS_WAIT_KEY = key;
     } else if (step.type === "abdoDone"){
       nextBtn.textContent = "✓ Terminer";
       html = `<div class="eyebrow">Bravo 💪</div><h2>Circuit Abdo terminé !</h2>
@@ -1729,6 +1732,26 @@ function runPhase(key, prefix, phases, idx, startAt){
         // enchaînement auto programmé à l'avance (tenue + repos d'une même série)
         tt.textContent = "0:00";
         setTimeout(()=>{ runPhase(key, prefix, phases, idx+1); }, phase.kind==="prep" ? 250 : 900);
+      } else if (isLastSet && FOCUS && FOCUS.kind === "abdo" && key.indexOf("abdo") === 0 && phase.kind !== "transition"){
+        // circuit Abdo : l'exercice vient de se terminer -> 10 s pour se replacer avant le suivant
+        tt.textContent = "0:00"; ts.textContent = "✓ Fait — prépare-toi pour la suite";
+        el.classList.remove("run"); el.classList.add("fin");
+        soundEnd();
+        const isLastExo = FOCUS.idx >= FOCUS.steps.length - 2; // le step suivant est "abdoDone"
+        setTimeout(()=>{
+          if (!FOCUS || FOCUS.kind !== "abdo") return;
+          if (isLastExo){ FOCUS.idx++; renderFocusStep(); }
+          else runPhase(key, prefix, [{ kind:"transition", secs:10, i:0, n:1 }], 0);
+        }, isLastExo ? 1200 : 900);
+      } else if (isLastSet && FOCUS && FOCUS.kind === "abdo" && phase.kind === "transition"){
+        // les 10 s de transition sont finies : on passe à l'exercice suivant et on le relance tout seul
+        el.classList.remove("run","fin");
+        setTimeout(()=>{
+          if (!FOCUS || FOCUS.kind !== "abdo") return;
+          FOCUS.idx++; renderFocusStep();
+          const nextStep = FOCUS.steps[FOCUS.idx];
+          if (nextStep && nextStep.type === "abdoExo") tToggle("abdo"+nextStep.i, "focus-");
+        }, 150);
       } else if (isLastSet){
         // fin réelle de l'exercice (toutes les séries faites)
         const n = phase.n;
