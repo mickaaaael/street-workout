@@ -928,8 +928,22 @@ function renderFocusStep(){
   } else if (step.type === "exo"){
     const e = step.e, i = step.i;
     const lk = key+"e"+i, val = (state.logs[lk]||"").replace(/"/g,"&quot;");
-    const hasHold = !!parseTarget(e.t).holdSecs;
+    const { holdSecs, sets } = parseTarget(e.t);
+    const hasHold = !!holdSecs;
     const isDone = FOCUS.completed.has(idx);
+    const repsMultiSet = !hasHold && sets > 1;
+    let gate = false, actionBtn = "";
+    if (hasHold){
+      gate = !isDone;
+    } else if (repsMultiSet){
+      const doneCount = setsDoneCount(lk);
+      gate = doneCount < sets;
+      const label = doneCount >= sets ? `✓ ${sets}/${sets} séries faites` : `✓ Série ${doneCount+1} faite → lancer le repos`;
+      actionBtn = `<button class="btn btn-ok mt" style="min-height:64px;font-size:18px" onclick="tToggle('${lk}','focus-')">${label}</button>`;
+    } else {
+      actionBtn = `<button class="btn ${isDone?'btn-ghost':'btn-ok'} mt" style="min-height:64px;font-size:18px" onclick="revealFocusNext()">${isDone?'✓ Marqué comme fait':"✓ J'ai terminé cet exercice"}</button>`;
+    }
+    if (gate) FOCUS_WAIT_KEY = lk;
     html = `<div class="eyebrow">Exercice ${i+1} / ${se.exos.length}</div>
       <div class="exo" style="margin-top:6px">
         <div class="name" style="font-size:17px">${e.n}</div>
@@ -937,9 +951,9 @@ function renderFocusStep(){
         ${picHTML(e.n)}
         ${timerHTML(e.t, lk, "focus-")}
         <input inputmode="text" placeholder="Réalisé : …" value="${val}" onchange="log('${lk}',this.value)">
-        ${!hasHold ? `<button class="btn ${isDone?'btn-ghost':'btn-ok'} mt" onclick="revealFocusNext()">${isDone?'✓ Séries marquées terminées':'✓ Séries terminées'}</button>` : ""}
+        ${actionBtn}
       </div>`;
-    if (hasHold && !isDone){ nextBtn.style.display = "none"; FOCUS_WAIT_KEY = lk; }
+    if (gate) nextBtn.style.display = "none";
   } else if (step.type === "stretch"){
     const strDone = state.str[key] || [];
     html = `<div class="eyebrow">Étirements · 5-8 min</div><h2 style="margin-bottom:10px">Fin de séance</h2>` +
