@@ -291,15 +291,17 @@ nav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stro
     Vidéos</button>
 </nav>
 
-<!-- lecteur de musique persistant (NCS - No Copyright Sounds, libre de droits) : reste en place
-     quel que soit l'onglet ou le mode focus, tant qu'on ne l'arrête pas -->
+<!-- musique d'entraînement : fichier MP3 hébergé dans l'appli (pas de YouTube => pas de pub).
+     "Energy Gym Thunder" par knox-gym, Pixabay Content License (usage libre en appli, sans attribution requise).
+     Reste en place quel que soit l'onglet ou le mode focus, tant qu'on ne l'arrête pas. -->
+<audio id="workoutAudio" src="abdo-music.mp3" loop preload="none"></audio>
 <div id="musicBox" style="display:none;position:fixed;right:10px;bottom:calc(66px + env(safe-area-inset-bottom));
-  z-index:200;width:160px;border-radius:10px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.5);
-  border:1px solid var(--line);background:#000">
-  <div id="ytMusicPlayer"></div>
+  z-index:200;align-items:center;gap:8px;background:rgba(10,13,16,.85);backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:999px;padding:8px 8px 8px 14px;
+  box-shadow:0 4px 16px rgba(0,0,0,.5);max-width:220px">
+  <span class="small" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">🎵 Energy Gym Thunder</span>
   <button onclick="stopMusic()" aria-label="Arrêter la musique"
-    style="position:absolute;top:3px;right:3px;width:22px;height:22px;background:rgba(0,0,0,.65);
-    color:#fff;border-radius:6px;font-size:12px;line-height:1;z-index:2">✕</button>
+    style="width:24px;height:24px;flex:none;border-radius:50%;background:var(--card2);color:var(--chalk);font-size:12px">✕</button>
 </div>
 
 <!-- ================= MODE FOCUS PLEIN ÉCRAN ================= -->
@@ -904,7 +906,7 @@ function renderAbdo(){
         <button class="btn btn-accent" onclick="startAbdoFocus()">${doneToday?"↺ Refaire le circuit":"▶ Démarrer le circuit"}</button>
         <button class="btn btn-ghost" style="width:auto;padding:0 16px" onclick="toggleMusic()" aria-label="Musique d'entraînement">🎵</button>
       </div>
-      <p class="small mt">🎵 Musique : playlist NCS (No Copyright Sounds), libre de droits.</p>
+      <p class="small mt">🎵 Musique : "Energy Gym Thunder" (knox-gym, Pixabay), hébergée dans l'appli — aucune pub.</p>
     </div>
     <h2 class="disp" style="font-size:16px;margin:18px 0 8px">Les 12 exercices</h2>
     <div class="week" style="margin-top:0">
@@ -1809,40 +1811,19 @@ document.getElementById("focusBody").addEventListener("click", (e) => {
   if (key) tToggle(key, "focus-");
 });
 
-/* ---------- musique d'entraînement (playlist NCS, libre de droits) ---------- */
-const MUSIC_PLAYLIST = "PLRBp0Fe2GpgklJUWqAx_Yq2-yVjEfDVae"; // NCS - Best Workout Music
-let ytPlayer = null;
-function loadYTApi(cb){
-  if (window.YT && window.YT.Player){ cb(); return; }
-  const prevCb = window.onYouTubeIframeAPIReady;
-  window.onYouTubeIframeAPIReady = () => { if (prevCb) prevCb(); cb(); };
-  if (!document.getElementById("ytApiScript")){
-    const tag = document.createElement("script");
-    tag.id = "ytApiScript"; tag.src = "https://www.youtube.com/iframe_api";
-    document.head.appendChild(tag);
-  }
-}
+/* ---------- musique d'entraînement (fichier MP3 hébergé, pas de YouTube => pas de pub) ---------- */
 function playMusic(){
-  const box = document.getElementById("musicBox");
-  box.style.display = "block";
-  if (ytPlayer && typeof ytPlayer.getPlayerState === "function"){
-    if (ytPlayer.getPlayerState() !== 1) ytPlayer.playVideo();
-    return;
-  }
-  loadYTApi(() => {
-    ytPlayer = new YT.Player("ytMusicPlayer", {
-      height: "90", width: "160",
-      playerVars: { listType:"playlist", list:MUSIC_PLAYLIST, autoplay:1, playsinline:1 },
-      events: { onReady: (ev) => ev.target.playVideo() }
-    });
-  });
+  const audio = document.getElementById("workoutAudio");
+  audio.play().catch(()=>{}); // ex. bloqué par le navigateur : un nouveau tap sur 🎵 débloquera
+  document.getElementById("musicBox").style.display = "flex";
 }
 function toggleMusic(){
-  if (ytPlayer && typeof ytPlayer.getPlayerState === "function" && ytPlayer.getPlayerState() === 1) stopMusic();
+  const audio = document.getElementById("workoutAudio");
+  if (!audio.paused) stopMusic();
   else playMusic();
 }
 function stopMusic(){
-  if (ytPlayer && typeof ytPlayer.pauseVideo === "function") ytPlayer.pauseVideo();
+  document.getElementById("workoutAudio").pause();
   document.getElementById("musicBox").style.display = "none";
 }
 
