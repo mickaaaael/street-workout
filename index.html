@@ -174,15 +174,32 @@ nav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stro
 /* téléphone tourné à l'horizontale pendant le mode focus : photo/pictogramme à gauche,
    chrono + boutons à droite, pour profiter de la largeur au lieu de tout empiler */
 @media (orientation:landscape) and (max-height:520px){
-  .focus-body{max-width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  /* la photo/le pictogramme remplit tout l'écran, la barre du haut et celle du bas flottent
+     par-dessus en dégradé, le nom et le chrono sont des pastilles semi-transparentes posées dessus */
+  .focus-top{position:absolute;top:0;left:0;right:0;z-index:5;border-bottom:none;
+    background:linear-gradient(rgba(0,0,0,.6),transparent)}
+  .focus-nav{position:absolute;bottom:0;left:0;right:0;z-index:5;border-top:none;
+    background:linear-gradient(transparent,rgba(0,0,0,.6))}
+  .focus-body{max-width:100%;padding:0;overflow:hidden}
   .focus-body>.eyebrow{display:none}
-  .focus-body .exo{display:flex;flex-direction:column;align-items:center;text-align:center;
-    width:100%;max-width:480px;background:none;border:none;padding:0}
-  .focus-body .exo .name{font-size:15px;margin-bottom:2px}
+  .focus-body .exo{position:relative;width:100%;height:100%;margin:0;padding:0;
+    background:none;border:none;border-radius:0}
   .focus-body .exo .target{display:none}
-  .focus-body .exo img,.focus-body .exo .pic{max-height:42vh;width:auto;max-width:100%;
-    object-fit:contain;margin:6px auto;border-radius:12px}
-  .focus-body .exo .timer{width:100%;margin-top:4px}
+  .focus-body .exo input,.focus-body .exo>button{display:none} /* couverts par le tap-n'importe-où */
+  .focus-body .exo img,.focus-body .exo .pic{position:absolute;inset:0;width:100%;height:100%;
+    max-height:none;max-width:none;object-fit:cover;margin:0;border-radius:0;z-index:0}
+  .focus-body .exo .pic svg{width:100%;height:100%}
+  .focus-body .exo .name{position:absolute;top:14px;left:14px;z-index:2;max-width:60%;
+    text-align:left;margin:0;font-size:14px;padding:6px 12px;border-radius:10px;
+    background:rgba(10,13,16,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+  .focus-body .exo .timer{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);
+    z-index:2;width:92%;max-width:420px;margin:0}
+  .focus-body .exo .timer .t-main,.focus-body .exo .timer .t-adj{
+    background:rgba(10,13,16,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+    border-color:rgba(255,255,255,.18)}
+  .focus-body .exo .flex-prompt{position:absolute;left:50%;bottom:82px;transform:translateX(-50%);
+    z-index:3;width:92%;max-width:420px;background:rgba(10,13,16,.65);backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);border-radius:12px;padding:10px}
 }
 
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
