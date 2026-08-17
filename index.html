@@ -174,11 +174,15 @@ nav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stro
 /* téléphone tourné à l'horizontale pendant le mode focus : photo/pictogramme à gauche,
    chrono + boutons à droite, pour profiter de la largeur au lieu de tout empiler */
 @media (orientation:landscape) and (max-height:520px){
-  .focus-body{max-width:1000px}
-  .focus-body .exo{display:flex;flex-wrap:wrap;column-gap:16px}
-  .focus-body .exo .name,.focus-body .exo .target{flex:1 1 100%}
-  .focus-body .exo img,.focus-body .exo .pic{flex:0 0 44%;max-width:44%;max-height:38vh;object-fit:cover;margin-top:6px}
-  .focus-body .exo .timer,.focus-body .exo input,.focus-body .exo .flex-prompt,.focus-body .exo>button{flex:1 1 48%;align-self:flex-start}
+  .focus-body{max-width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .focus-body>.eyebrow{display:none}
+  .focus-body .exo{display:flex;flex-direction:column;align-items:center;text-align:center;
+    width:100%;max-width:480px;background:none;border:none;padding:0}
+  .focus-body .exo .name{font-size:15px;margin-bottom:2px}
+  .focus-body .exo .target{display:none}
+  .focus-body .exo img,.focus-body .exo .pic{max-height:42vh;width:auto;max-width:100%;
+    object-fit:contain;margin:6px auto;border-radius:12px}
+  .focus-body .exo .timer{width:100%;margin-top:4px}
 }
 
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -1727,6 +1731,24 @@ function runPhase(key, prefix, phases, idx, startAt){
     }
   }, 1000) };
 }
+
+/* mode paysage : appuyer n'importe où sur la carte d'exercice (hors vrais boutons) lance/pause le chrono */
+const LANDSCAPE_MQ = "(orientation:landscape) and (max-height:520px)";
+function currentExoKey(){
+  if (!FOCUS) return null;
+  const step = FOCUS.steps[FOCUS.idx];
+  if (!step) return null;
+  if (step.type === "abdoExo") return "abdo"+step.i;
+  if (step.type === "flexExo") return "flex"+step.i;
+  if (step.type === "exo") return sid(FOCUS.w, FOCUS.s)+"e"+step.i;
+  return null;
+}
+document.getElementById("focusBody").addEventListener("click", (e) => {
+  if (!window.matchMedia(LANDSCAPE_MQ).matches) return;
+  if (e.target.closest("button, input, a")) return; // les vrais contrôles gardent leur propre action
+  const key = currentExoKey();
+  if (key) tToggle(key, "focus-");
+});
 
 updateVolButtons();
 </script>
