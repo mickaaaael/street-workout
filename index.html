@@ -1748,26 +1748,29 @@ function runPhase(key, prefix, phases, idx, startAt){
         // enchaînement auto programmé à l'avance (tenue + repos d'une même série)
         tt.textContent = "0:00";
         setTimeout(()=>{ runPhase(key, prefix, phases, idx+1); }, phase.kind==="prep" ? 250 : 900);
-      } else if (isLastSet && FOCUS && FOCUS.kind === "abdo" && key.indexOf("abdo") === 0 && phase.kind !== "transition"){
-        // circuit Abdo : l'exercice vient de se terminer -> 10 s pour se replacer avant le suivant
-        tt.textContent = "0:00"; ts.textContent = "✓ Fait — prépare-toi pour la suite";
-        el.classList.remove("run"); el.classList.add("fin");
+      } else if (isLastSet && FOCUS && FOCUS.kind === "abdo" && key.indexOf("abdo") === 0 && phase.kind === "hold"){
+        // circuit Abdo : l'exercice vient de se terminer -> on affiche DÉJÀ le suivant (nom + image)
+        // pour savoir quelle position prendre, avec 10 s de préparation avant que son chrono démarre
         soundEnd();
+        el.classList.remove("run"); el.classList.add("fin");
         const isLastExo = FOCUS.idx >= FOCUS.steps.length - 2; // le step suivant est "abdoDone"
-        setTimeout(()=>{
-          if (!FOCUS || FOCUS.kind !== "abdo") return;
-          if (isLastExo){ FOCUS.idx++; renderFocusStep(); }
-          else runPhase(key, prefix, [{ kind:"transition", secs:10, i:0, n:1 }], 0);
-        }, isLastExo ? 1200 : 900);
-      } else if (isLastSet && FOCUS && FOCUS.kind === "abdo" && phase.kind === "transition"){
-        // les 10 s de transition sont finies : on passe à l'exercice suivant et on le relance tout seul
-        el.classList.remove("run","fin");
-        setTimeout(()=>{
-          if (!FOCUS || FOCUS.kind !== "abdo") return;
-          FOCUS.idx++; renderFocusStep();
-          const nextStep = FOCUS.steps[FOCUS.idx];
-          if (nextStep && nextStep.type === "abdoExo") tToggle("abdo"+nextStep.i, "focus-");
-        }, 150);
+        if (isLastExo){
+          tt.textContent = "0:00"; ts.textContent = "✓ Circuit terminé !";
+          setTimeout(()=>{ if (!FOCUS || FOCUS.kind !== "abdo") return; FOCUS.idx++; renderFocusStep(); }, 1200);
+        } else {
+          tt.textContent = "0:00"; ts.textContent = "✓ Fait !";
+          setTimeout(()=>{
+            if (!FOCUS || FOCUS.kind !== "abdo") return;
+            FOCUS.idx++;
+            renderFocusStep(); // affiche tout de suite le nom + l'image du prochain exercice
+            const nextStep = FOCUS.steps[FOCUS.idx];
+            if (nextStep && nextStep.type === "abdoExo"){
+              const nextKey = "abdo"+nextStep.i;
+              const nextHold = (TDUR[nextKey] && TDUR[nextKey].hold) || 45;
+              runPhase(nextKey, prefix, [{ kind:"prep", secs:10, i:0, n:1 }, { kind:"hold", secs:nextHold, i:0, n:1 }], 0);
+            }
+          }, 500);
+        }
       } else if (isLastSet){
         // fin réelle de l'exercice (toutes les séries faites)
         const n = phase.n;
