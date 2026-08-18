@@ -837,10 +837,14 @@ function openSession(w, s){
 /* ---------- mode focus plein écran : un exercice à la fois, avance guidée ---------- */
 /* ouvre l'overlay plein écran : fullscreen + tentative de bascule en paysage (best-effort,
    surtout Android Chrome — iOS Safari ne supporte pas le verrouillage d'orientation en JS) */
-async function enterFocusOverlay(){
+async function enterFocusOverlay(tryLandscape){
   document.getElementById("focusOverlay").classList.add("on");
   try { await document.documentElement.requestFullscreen(); } catch(e){ /* non supporté / refusé — l'overlay suffit */ }
-  try { if (screen.orientation && screen.orientation.lock) await screen.orientation.lock("landscape"); } catch(e){}
+  // bascule auto en paysage uniquement pour Abdo/Souplesse (il y a une photo à voir en grand) ;
+  // pas pour les séances classiques (juste du texte/pictos, le portrait reste plus pratique)
+  if (tryLandscape){
+    try { if (screen.orientation && screen.orientation.lock) await screen.orientation.lock("landscape"); } catch(e){}
+  }
 }
 function buildFocusSteps(w, s){
   const pi = phaseIndex(w), ph = PHASES[pi], se = ph.seances[SKEYS.indexOf(s)];
@@ -851,7 +855,7 @@ function buildFocusSteps(w, s){
 }
 async function startFocus(w, s){
   FOCUS = { steps: buildFocusSteps(w,s), idx:0, w, s, completed:new Set() };
-  await enterFocusOverlay();
+  await enterFocusOverlay(false);
   renderFocusStep();
 }
 
@@ -864,7 +868,7 @@ function buildAbdoSteps(){
 async function startAbdoFocus(startIdx){
   FOCUS = { kind:"abdo", steps: buildAbdoSteps(), idx: startIdx||0, completed:new Set() };
   playMusic(); // musique d'entraînement auto au lancement du circuit
-  await enterFocusOverlay();
+  await enterFocusOverlay(true);
   renderFocusStep();
 }
 function openAbdoFocus(){ show('abdo'); startAbdoFocus(); }
@@ -877,7 +881,7 @@ function buildFlexSteps(){
 }
 async function startFlexFocus(startIdx){
   FOCUS = { kind:"flex", steps: buildFlexSteps(), idx: startIdx||0, completed:new Set() };
-  await enterFocusOverlay();
+  await enterFocusOverlay(true);
   renderFocusStep();
 }
 function openFlexFocus(){ show('flex'); startFlexFocus(); }
