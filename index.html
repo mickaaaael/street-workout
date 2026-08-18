@@ -374,7 +374,7 @@ const FLEX_DAILY = [
       "Torsion du buste en essayant de rejoindre progressivement tes mains derrière le dos (aide-toi d'une serviette si besoin)" ] },
 ];
 const FLEX_SETS = 3, FLEX_REST = 30;                    // 3 séries, 30 s de repos (repris de l'image)
-const FLEX_DUR_MIN = 30, FLEX_DUR_MAX = 60, FLEX_DUR_STEP = 10;  // 30 à 60 s par exercice
+const FLEX_DUR_MIN = 30, FLEX_DUR_MAX = 60, FLEX_DUR_STEP = 5;   // 30 à 60 s par exercice
 
 /* Circuit Abdo : 12 exercices enchaînés, 45 s chacun + 10 s de repos entre deux (photos perso) */
 const ABDO_EXOS = [
@@ -997,8 +997,6 @@ function renderFocusStep(){
       const p = flexProgState(i);
       const levelTxt = f.levels[Math.min(p.level, f.levels.length-1)];
       const target = `${FLEX_SETS} × ${p.dur} s · repos ${FLEX_REST} s`;
-      const canHarder = p.level < f.levels.length-1;
-      nextBtn.textContent = "Suivant ▶";
       html = `<div class="eyebrow">Exercice ${i+1} / ${FLEX_DAILY.length}</div>
         <div class="exo" style="margin-top:6px">
           <div class="name" style="font-size:17px">${f.n}</div>
@@ -1008,14 +1006,13 @@ function renderFocusStep(){
           <div class="flex-prompt" id="flexPrompt-focus-${i}" style="display:none">
             <p class="small mt">La prochaine fois, tu veux que ce soit :</p>
             <div class="mt" style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="btn btn-ghost" style="width:auto;padding:0 14px;min-height:42px" onclick="flexProgress(${i},'long')">⏱ Plus long</button>
-              ${canHarder ? `<button class="btn btn-ghost" style="width:auto;padding:0 14px;min-height:42px" onclick="flexProgress(${i},'hard')">💪 Plus dur</button>` : ""}
+              <button class="btn btn-ghost" style="width:auto;padding:0 14px;min-height:42px" onclick="flexProgress(${i},'long')">⏱ Plus long (+5 s)</button>
               <button class="btn btn-ghost" style="width:auto;padding:0 14px;min-height:42px" onclick="flexProgress(${i},'same')">Pareil</button>
             </div>
           </div>
         </div>`;
+      // pas de "Suivant" : on avance via les boutons Plus long / Pareil ci-dessus
       nextBtn.style.display = "none";
-      FOCUS_WAIT_KEY = key;
     } else if (step.type === "flexDone"){
       nextBtn.textContent = "✓ Terminer";
       html = `<div class="eyebrow">Bravo 💪</div><h2>Souplesse du jour terminée !</h2>
@@ -1160,15 +1157,15 @@ function flexProgState(i){
   return state.flexProg[i] || { level:0, dur:FLEX_DUR_MIN };
 }
 function flexProgress(i, kind){
-  if (kind !== "same"){
+  if (kind === "long"){
     state.flexProg = state.flexProg || {};
     const p = flexProgState(i);
-    if (kind === "long") p.dur = Math.min(FLEX_DUR_MAX, p.dur + FLEX_DUR_STEP);
-    else if (kind === "hard"){ p.level = Math.min(FLEX_DAILY[i].levels.length-1, p.level+1); p.dur = FLEX_DUR_MIN; }
+    p.dur = Math.min(FLEX_DUR_MAX, p.dur + FLEX_DUR_STEP);
     state.flexProg[i] = p;
     save();
   }
-  if (FOCUS && FOCUS.kind === "flex") renderFocusStep(); else renderFlex();
+  // "same" ne change rien ; dans les deux cas, en mode focus on avance directement à l'exercice suivant
+  if (FOCUS && FOCUS.kind === "flex") focusNext(); else renderFlex();
 }
 function showFlexPrompt(i){
   const el = document.getElementById("flexPrompt"+i);
@@ -1193,7 +1190,6 @@ function renderFlex(){
       const p = flexProgState(i);
       const levelTxt = f.levels[Math.min(p.level, f.levels.length-1)];
       const target = `${FLEX_SETS} × ${p.dur} s · repos ${FLEX_REST} s`;
-      const canHarder = p.level < f.levels.length-1;
       return `<div class="exo">
         <div class="name">${f.n}</div>
         <div class="target" style="color:var(--chalk);font-weight:400;font-size:14px;margin:2px 0 6px">${levelTxt}</div>
@@ -1203,8 +1199,7 @@ function renderFlex(){
         <div class="flex-prompt" id="flexPrompt${i}" style="display:none">
           <p class="small mt">La prochaine fois, tu veux que ce soit :</p>
           <div class="mt" style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn btn-ghost" style="width:auto;padding:0 14px;min-height:42px" onclick="flexProgress(${i},'long')">⏱ Plus long</button>
-            ${canHarder ? `<button class="btn btn-ghost" style="width:auto;padding:0 14px;min-height:42px" onclick="flexProgress(${i},'hard')">💪 Plus dur</button>` : ""}
+            <button class="btn btn-ghost" style="width:auto;padding:0 14px;min-height:42px" onclick="flexProgress(${i},'long')">⏱ Plus long (+5 s)</button>
             <button class="btn btn-ghost" style="width:auto;padding:0 14px;min-height:42px" onclick="flexProgress(${i},'same')">Pareil</button>
           </div>
         </div>
